@@ -1,6 +1,16 @@
+# Google Photos for Obsidian
+
+![](img/demo.gif)
+
+This plugin let's you embed Google Photos images directly into Obsidian. When you select an image, it will save and embed a low-res thumbnail with a link back to the full-res image on Google Photos.
+
+If your note title has a detectable date, you can have the plugin default to showing you only photos from that date. There is a toggle at the top to show all photos instead.
+
 # How to set up
 
 To connect to Google Photos from a third-party plugin, you will need to create an API key for the plugin to use.
+
+**The plugin will only request read-only access. It is not able to modify your photos or albums.**
 
 1. Visit [https://developers.google.com/photos/library/guides/get-started](https://developers.google.com/photos/library/guides/get-started)
 
