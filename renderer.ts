@@ -27,13 +27,36 @@ export default class Renderer {
   }
 
   /**
+   * Simple wrapper for document.createElement to make replicating Obsidian DOM elements faster
+   * @param {string} type - Element type: div, span, etc
+   * @param {string} classes - String of classes which are copy/pasted from the DOM
+   * @param {HTMLElement} parent - Parent to 'appendChild' the new element
+   * @return Returns the newly created element
+   */
+  createElement (type: string, classes: string, parent: HTMLElement) {
+    const el = document.createElement(type)
+    if (classes) el.addClasses(classes.split(' '))
+    parent.appendChild(el)
+    return el
+  }
+
+  isVisible (el: HTMLElement) {
+    return new Promise(resolve => {
+      const o = new IntersectionObserver(([entry]) => {
+        resolve(entry.intersectionRatio > 0.3)
+        o.disconnect()
+      })
+      o.observe(el)
+    })
+  }
+
+  /**
    * Append an array of mediaItems to an HTML element
-   *
    * @param {HTMLElement} el
    * @param {array} thumbnails
    * @param {function} onclick
    */
-  appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (el: any) => void) {
+  appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
     (thumbnails || []).forEach(({productUrl, baseUrl, mediaMetadata}) => {
       // Image element
       const img = new Image()
@@ -49,6 +72,34 @@ export default class Renderer {
     })
   }
 
+  createCheckbox (parentEl: HTMLElement, title: string, callback: (state: boolean) => void) {
+    const outer = this.createElement('div', 'setting-item mod-toggle', parentEl)
+    outer.style.marginBottom = '10px'
+    outer.style.width = 'fit-content'
+    const settingInfo = this.createElement('div', 'setting-item-info', outer)
+    const name = this.createElement('div', 'setting-item-name', settingInfo)
+    name.innerText = title
+    this.createElement('div', 'setting-item-description', settingInfo)
+    const settingControl = this.createElement('div', 'setting-item-control', outer)
+    const checkboxContainer = this.createElement('div', 'checkbox-container is-enabled', settingControl)
+    const input = document.createElement('input')
+    input.type = 'checkbox'
+    checkboxContainer.appendChild(input)
+    // Watch for click events and reset the photo grid
+    checkboxContainer.onclick = () => {
+      if (checkboxContainer.classList.contains('is-enabled')) {
+        // Currently enabled, so disable
+        checkboxContainer.removeClass('is-enabled')
+        callback(false)
+      } else {
+        // Currently disabled, so enable
+        checkboxContainer.addClass('is-enabled')
+        callback(true)
+      }
+    }
+    return outer
+  }
+
   showWaitingCursor (state: boolean) {
     // Set spinner cursor
     document.body.style.cursor = state ? 'wait' : 'default'
@@ -56,86 +107,38 @@ export default class Renderer {
 }
 
 export class GridView extends Renderer {
-  contentEl: HTMLElement
   scrollEl: HTMLElement
-  grid: HTMLElement
-  options: object
+  containerEl: HTMLElement
+  gridEl: HTMLElement
+  searchParams: object = {}
   plugin: GooglePhotos
-  modal: PhotosModal
-  editor: Editor
+  onThumbnailClick: Function = () => {}
   nextPageToken: string
-  noteDate: moment.Moment
-  limitPhotosToNoteDate: boolean = true
   fetching: boolean = false
   moreResults: boolean = true
   active: boolean = true
 
-  constructor ({contentEl, scrollEl, options = {}, plugin, modal, editor}: {
-    contentEl: HTMLElement,
-    scrollEl: HTMLElement,
-    options?: object,
+  constructor ({scrollEl, plugin, onThumbnailClick}: {
     plugin: GooglePhotos,
-    modal: PhotosModal,
-    editor: Editor
+    scrollEl?: HTMLElement,
+    onThumbnailClick?: Function
   }) {
     super(plugin)
-    this.modal = modal
-    this.editor = editor
-    this.contentEl = contentEl
-    this.scrollEl = scrollEl
-    this.options = options
-  }
-
-  async init () {
-    const createEl = function (type: string, classes: string, parent: HTMLElement) {
-      const el = document.createElement(type)
-      if (classes) el.addClasses(classes.split(' '))
-      parent.appendChild(el)
-      return el
-    }
-
-    // Show the checkbox for today / all photos
-    this.noteDate = moment(this.modal.view.file.basename, this.plugin.settings.parseNoteTitle)
-    if (this.noteDate.isValid()) {
-      // Add the required checkbox DOM content
-      const outer = createEl('div', 'setting-item mod-toggle', this.contentEl)
-      outer.style.marginBottom = '10px'
-      outer.style.width = 'fit-content'
-      const settingInfo = createEl('div', 'setting-item-info', outer)
-      const name = createEl('div', 'setting-item-name', settingInfo)
-      name.innerText = 'Limit photos to ' + this.noteDate.format('dddd, MMMM D')
-      createEl('div', 'setting-item-description', settingInfo)
-      const settingControl = createEl('div', 'setting-item-control', outer)
-      const checkboxContainer = createEl('div', 'checkbox-container is-enabled', settingControl)
-      const input = document.createElement('input')
-      input.type = 'checkbox'
-      checkboxContainer.appendChild(input)
-      // Watch for click events and reset the photo grid
-      checkboxContainer.onclick = () => {
-        if (this.limitPhotosToNoteDate) {
-          checkboxContainer.removeClass('is-enabled')
-        } else {
-          checkboxContainer.addClass('is-enabled')
-        }
-        this.limitPhotosToNoteDate = !this.limitPhotosToNoteDate
-        this.resetGrid()
-        this.getThumbnails(this.grid)
-      }
+    if (onThumbnailClick) {
+      // Add an event handler if provided
+      this.onThumbnailClick = onThumbnailClick
     }
 
     // Add the photo-grid container
-    this.grid = this.contentEl.createEl('div')
+    this.containerEl = document.createElement('div')
+    this.gridEl = this.containerEl.createEl('div')
     // Add the loading spinner
-    this.contentEl.appendChild(this.spinner)
+    this.containerEl.appendChild(this.spinner)
     this.spinner.toggleVisibility(true)
 
-    if (this.scrollEl) {
-      // Watch for a scroll event
-      this.scrollEl.addEventListener('scroll', () => this.getThumbnails(this.grid))
-    }
-
-    // Add the first lot of thumbnails
-    await this.getThumbnails(this.grid)
+    // Watch for a scroll event
+    this.scrollEl = scrollEl || this.containerEl
+    this.scrollEl.addEventListener('scroll', () => this.getThumbnails())
   }
 
   /**
@@ -143,14 +146,22 @@ export class GridView extends Renderer {
    */
   async resetGrid () {
     this.spinner.toggleVisibility(true)
-    const oldGrid = this.grid
+    const oldGrid = this.gridEl
     oldGrid.empty()
-    this.grid = document.createElement('div')
-    this.contentEl.replaceChild(this.grid, oldGrid)
+    this.gridEl = document.createElement('div')
+    this.containerEl.replaceChild(this.gridEl, oldGrid)
     this.active = true
     this.fetching = false
     this.nextPageToken = ''
     this.moreResults = true
+  }
+
+  setSearchParams (searchParams: object) {
+    this.searchParams = searchParams
+  }
+
+  clearSearchParams () {
+    this.searchParams = {}
   }
 
   /**
@@ -160,37 +171,27 @@ export class GridView extends Renderer {
    *
    * @returns {Promise<void>}
    */
-  getThumbnails = async (targetEl: HTMLElement) => {
+  getThumbnails = async () => {
     if (this.fetching) {
       // An instance is already in the process of fetching more thumbnails
       return
     }
     this.fetching = true
+    const targetEl = this.gridEl
     while (
       this.active && this.moreResults && this.scrollEl &&
-      this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (8 * this.thumbnailHeight)
+      this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.thumbnailHeight) &&
+      (!targetEl.innerHTML || await this.isVisible(this.scrollEl)) // Element is visible in the viewport
       ) {
       // Perform the search with Photos API and output the result
       try {
-        const localOptions = Object.assign({}, this.options)
-        if (this.noteDate.isValid() && this.limitPhotosToNoteDate) {
-          // Show only photos taken on the same date as the note
-          Object.assign(localOptions, {
-            filters: {
-              dateFilter: {
-                dates: [{
-                  year: +this.noteDate.format('YYYY'),
-                  month: +this.noteDate.format('M'),
-                  day: +this.noteDate.format('D')
-                }]
-              }
-            }
-          })
-        }
+        const localOptions = Object.assign({}, this.searchParams)
         if (this.nextPageToken) Object.assign(localOptions, {pageToken: this.nextPageToken})
         const {mediaItems, nextPageToken} = await this.plugin.photosApi.mediaItemsSearch(localOptions)
-        // console.log(`appending ${mediaItems.length} items`)
-        this.appendThumbnailsToElement(targetEl, mediaItems, (el) => this.insertImageIntoEditor(el))
+        if (mediaItems) {
+          // console.log(`appending ${mediaItems.length} items`)
+          this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
+        }
         this.moreResults = !!nextPageToken
         this.spinner.toggleVisibility(this.moreResults)
         this.nextPageToken = nextPageToken
@@ -207,7 +208,6 @@ export class GridView extends Renderer {
           if (e === 'Unauthenticated') {
             this.active = false
             new Notice('Failed to authenticate')
-            this.modal.close()
           }
           break
         }
@@ -216,29 +216,9 @@ export class GridView extends Renderer {
     this.fetching = false
   }
 
-  /**
-   * Save a local thumbnail and insert the thumbnail plus a link back to the original Google Photos location
-   * @param el
-   */
-  async insertImageIntoEditor (el: any) {
-    this.showWaitingCursor(true)
-    try {
-      let {baseurl, producturl, filename} = el.target.dataset
-      const src = baseurl + `=w${this.thumbnailWidth}-h${this.thumbnailHeight}`
-      const folder = path.dirname(this.modal.view.file.path)
-      this.modal.close()
-      const imageData = await requestUrl({url: src})
-      await this.modal.view.app.vault.adapter.writeBinary(folder + '/' + filename, imageData.arrayBuffer)
-      this.editor.replaceRange(`[![](${filename})](${producturl})`, this.editor.getCursor())
-    } catch (e) {
-      console.log(e)
-    }
-    this.showWaitingCursor(false)
-  }
-
   destroy () {
     try {
-      this.scrollEl.removeEventListener('scroll', () => this.getThumbnails(this.grid))
+      this.scrollEl.removeEventListener('scroll', () => this.getThumbnails())
     } catch (e) {
       // nothing
     }

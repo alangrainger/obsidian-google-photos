@@ -1,7 +1,9 @@
-import { App, MarkdownView, Modal, Plugin, PluginSettingTab, Setting, moment, Editor } from 'obsidian'
+import { App, MarkdownView, Modal, Plugin, PluginSettingTab, Setting, moment, Editor, requestUrl } from 'obsidian'
 import Renderer, { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
+
+const path = require('path')
 
 interface GooglePhotosSettings {
   clientId: string;
@@ -44,9 +46,13 @@ export default class GooglePhotos extends Plugin {
 
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
 
-    /*this.registerMarkdownCodeBlockProcessor('photos', (source, el) => {
-      return this.renderer.gridView(el, this.parseCodeblock(source))
-    })*/
+    this.registerMarkdownCodeBlockProcessor('photos', (source, el, ctx) => {
+      const grid = new GridView({plugin: this})
+      el.appendChild(grid.containerEl)
+      grid.containerEl.style.maxHeight = '500px'
+      grid.containerEl.style.overflow = 'scroll'
+      grid.getThumbnails()
+    })
 
     this.addCommand({
       id: 'insert-google-photo',
@@ -189,6 +195,8 @@ export class PhotosModal extends Modal {
   gridView: GridView
   editor: Editor
   view: MarkdownView
+  noteDate: moment.Moment
+  limitPhotosToNoteDate: boolean = true
 
   constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
     super(app)
@@ -197,16 +205,72 @@ export class PhotosModal extends Modal {
     this.view = view
   }
 
+  /**
+   * Save a local thumbnail and insert the thumbnail plus a link back to the original Google Photos location
+   * @param event
+   */
+  async insertImageIntoEditor (event: { target: HTMLImageElement }) {
+    this.plugin.renderer.showWaitingCursor(true)
+    try {
+      let {baseurl, producturl, filename} = event.target.dataset
+      const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
+      const folder = path.dirname(this.view.file.path)
+      this.close() // close the modal
+      const imageData = await requestUrl({url: src})
+      await this.view.app.vault.adapter.writeBinary(folder + '/' + filename, imageData.arrayBuffer)
+      this.editor.replaceRange(`[![](${filename})](${producturl})`, this.editor.getCursor())
+    } catch (e) {
+      console.log(e)
+    }
+    this.plugin.renderer.showWaitingCursor(false)
+  }
+
   async onOpen () {
     const {contentEl, modalEl} = this
     this.gridView = new GridView({
-      contentEl,
       scrollEl: modalEl,
       plugin: this.plugin,
-      editor: this.editor,
-      modal: this
+      onThumbnailClick: (event: { target: HTMLImageElement }) => this.insertImageIntoEditor(event)
     })
-    await this.gridView.init()
+
+    // Check for a valid date from the note title
+    this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle)
+    if (this.noteDate.isValid()) {
+      // The currently open note has a parsable date
+      const dailyNoteParams = {
+        filters: {
+          dateFilter: {
+            dates: [{
+              year: +this.noteDate.format('YYYY'),
+              month: +this.noteDate.format('M'),
+              day: +this.noteDate.format('D')
+            }]
+          }
+        }
+      }
+      if (this.plugin.settings.defaultToDailyPhotos) {
+        // Set the default view to show photos from today
+        this.gridView.setSearchParams(dailyNoteParams)
+      }
+
+      // Create the checkbox to switch between today / all photos
+      this.plugin.renderer.createCheckbox(contentEl, 'Limit photos to ' + this.noteDate.format('dddd, MMMM D'), checked => {
+        if (checked) {
+          this.gridView.setSearchParams(dailyNoteParams)
+        } else {
+          this.gridView.clearSearchParams()
+        }
+        this.limitPhotosToNoteDate = checked
+        this.gridView.resetGrid()
+        this.gridView.getThumbnails()
+      })
+    }
+
+    // Attach the grid view to the modal
+    contentEl.appendChild(this.gridView.containerEl)
+
+    // Start fetching thumbnails!
+    await this.gridView.getThumbnails()
   }
 
   onClose () {
