@@ -60,7 +60,7 @@ export default class Renderer {
     (thumbnails || []).forEach(({productUrl, baseUrl, mediaMetadata}) => {
       // Image element
       const img = new Image()
-      img.src = baseUrl + `=w500-h120`
+      img.src = baseUrl + `=w500-h130`
       img.dataset.baseurl = baseUrl
       img.dataset.producturl = productUrl
       const {creationTime} = mediaMetadata

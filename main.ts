@@ -227,6 +227,7 @@ export class PhotosModal extends Modal {
 
   async onOpen () {
     const {contentEl, modalEl} = this
+    modalEl.style.width = '80%'
     this.gridView = new GridView({
       scrollEl: modalEl,
       plugin: this.plugin,
