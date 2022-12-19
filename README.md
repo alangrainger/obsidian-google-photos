@@ -36,3 +36,9 @@ Redirect URI: `https://localhost/google-photos`
 6. Copy the `Client ID` and `Client Secret`. You will need to add these values into the Obsidian plugin settings:
 
 ![](img/setup-client-conf.png)
+
+---
+
+### Attribution
+
+Loading spinner from [loading.io](https://loading.io/)
