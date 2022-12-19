@@ -1,0 +1,11 @@
+{
+	"id": "google-photos",
+	"name": "Google Photos",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "",
+	"author": "Alan Grainger",
+	"authorUrl": "https://github.com/alangrainger/",
+	"fundingUrl": "https://ko-fi.com/alan_",
+	"isDesktopOnly": true
+}
