@@ -46,7 +46,7 @@ export default class GooglePhotos extends Plugin {
 
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
 
-    this.registerMarkdownCodeBlockProcessor('photos', (source, el, ctx) => {
+    this.registerMarkdownCodeBlockProcessor('photos', (source, el) => {
       const grid = new GridView({plugin: this})
       el.appendChild(grid.containerEl)
       grid.containerEl.style.maxHeight = '500px'
@@ -67,28 +67,6 @@ export default class GooglePhotos extends Plugin {
   }
 
   onunload () { }
-
-  parseCodeblock (source: string) {
-    let filters = {
-      dateFilter: {}
-    }
-    const userOptions = JSON.parse(source)
-    if (userOptions.rawQuery) {
-      filters = userOptions.rawQuery
-    } else if (userOptions.showToday) {
-      const date = new Date()
-      filters.dateFilter = {
-        dates: [{
-          year: date.getFullYear(),
-          month: date.getMonth() + 1,
-          day: date.getDate()
-        }]
-      }
-    }
-    return {
-      filters: filters
-    }
-  }
 
   async loadSettings () {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
@@ -275,7 +253,7 @@ export class PhotosModal extends Modal {
   }
 
   onClose () {
-    const {contentEl} = this
+    // const {contentEl} = this
     this.gridView.destroy()
   }
 }
