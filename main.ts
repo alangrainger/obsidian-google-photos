@@ -3,8 +3,6 @@ import Renderer, { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 
-const path = require('path')
-
 interface GooglePhotosSettings {
   clientId: string;
   clientSecret: string;
@@ -192,7 +190,7 @@ export class PhotosModal extends Modal {
     try {
       let {baseurl, producturl, filename} = event.target.dataset
       const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
-      const folder = path.dirname(this.view.file.path)
+      const folder = this.view.file.path.split('/').slice(0, -1).join('/')
       this.close() // close the modal
       const imageData = await requestUrl({url: src})
       await this.view.app.vault.adapter.writeBinary(folder + '/' + filename, imageData.arrayBuffer)

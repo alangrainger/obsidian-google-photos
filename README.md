@@ -6,6 +6,14 @@ This plugin let's you embed Google Photos images directly into Obsidian. When yo
 
 If your note title has a detectable date, you can have the plugin default to showing you only photos from that date. There is a toggle at the top to show all photos instead.
 
+## Using a mobile device
+
+You can use Google Photos on a mobile device, but due to mobile limitations you will first need to connect to Google Photos from Obsidian using a desktop device.
+
+Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues.
+
+If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled.
+
 # How to set up
 
 To connect to Google Photos from a third-party plugin, you will need to create an API key for the plugin to use.

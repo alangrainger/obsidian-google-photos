@@ -1,5 +1,4 @@
-import { BrowserWindow } from '@electron/remote'
-import { moment } from 'obsidian'
+import { moment, Notice, Platform } from 'obsidian'
 import GooglePhotos from './main'
 
 export default class OAuth {
@@ -36,6 +35,15 @@ export default class OAuth {
 
   requestPermissions (): Promise<boolean> {
     return new Promise(resolve => {
+      if (Platform.isMobile) {
+        // Electron BrowserWindow is not supported on mobile:
+        // https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md#nodejs-and-electron-api
+        new Notice('You will need to authenticate using a desktop device first before you can use a mobile device.')
+        resolve(false)
+        return
+      }
+      const {BrowserWindow} = require('@electron/remote')
+
       const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
       codeUrl.search = new URLSearchParams({
         scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
@@ -63,7 +71,7 @@ export default class OAuth {
       const filter = {
         urls: [this.callbackUrl + '*']
       }
-      webRequest.onBeforeRequest(filter, async ({url}) => {
+      webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
         // Exchange the authorisation code for an access token
         const code = new URL(url).searchParams.get('code') || ''
         const res = await this.getAccessToken({
