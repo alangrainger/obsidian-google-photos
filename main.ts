@@ -1,4 +1,4 @@
-import { App, MarkdownView, Modal, Plugin, PluginSettingTab, Setting, moment, Editor, requestUrl } from 'obsidian'
+import { App, MarkdownView, Modal, Plugin, PluginSettingTab, Setting, moment, Editor, requestUrl, Platform } from 'obsidian'
 import Renderer, { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
@@ -203,7 +203,10 @@ export class PhotosModal extends Modal {
 
   async onOpen () {
     const {contentEl, modalEl} = this
-    modalEl.style.width = '80%'
+    if (Platform.isDesktop) {
+      // Resize to fit the viewport width on desktop
+      modalEl.style.width = '80%'
+    }
     this.gridView = new GridView({
       scrollEl: modalEl,
       plugin: this.plugin,
