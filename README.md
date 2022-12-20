@@ -45,6 +45,35 @@ Redirect URI: `https://localhost/google-photos`
 
 ![](img/setup-client-conf.png)
 
+# Advanced features
+
+There is very basic codeblock support. You can run your own custom queries using the Photos API search format:
+
+https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
+
+For example, if you wanted to show photos of food taken on every April 1st, you would use:
+
+````
+```photos
+{
+  "filters": {
+    "dateFilter": {
+      "dates": [{
+        "year": 0,
+        "month": 4,
+        "day": 1
+      }]
+    },
+    "contentFilter": {
+      "includedContentCategories": [
+        "FOOD"
+      ]
+    }
+  }
+}
+```
+````
+
 ---
 
 ### Attribution
