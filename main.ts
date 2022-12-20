@@ -49,6 +49,11 @@ export default class GooglePhotos extends Plugin {
       el.appendChild(grid.containerEl)
       grid.containerEl.style.maxHeight = '500px'
       grid.containerEl.style.overflow = 'scroll'
+      try {
+        if (source.trim()) grid.setSearchParams(JSON.parse(source))
+      } catch (e) {
+        // unable to parse source block
+      }
       grid.getThumbnails()
     })
 

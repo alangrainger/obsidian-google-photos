@@ -40,54 +40,54 @@ export default class OAuth {
         // https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md#nodejs-and-electron-api
         new Notice('You will need to authenticate using a desktop device first before you can use a mobile device.')
         resolve(false)
-        return
-      }
-      const {BrowserWindow} = require('@electron/remote')
-
-      const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-      codeUrl.search = new URLSearchParams({
-        scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
-        include_granted_scopes: 'true',
-        response_type: 'code',
-        access_type: 'offline',
-        state: 'state_parameter_passthrough_value',
-        redirect_uri: this.callbackUrl,
-        client_id: this.plugin.settings.clientId
-      }).toString()
-
-      // Load the Google OAuth request page in a browser window
-      const window = new BrowserWindow({
-        width: 600,
-        height: 800,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true
-        },
-      })
-      window.loadURL(codeUrl.href).then()
-
-      // Set up to watch for the callback URL
-      const {session: {webRequest}} = window.webContents
-      const filter = {
-        urls: [this.callbackUrl + '*']
-      }
-      webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
-        // Exchange the authorisation code for an access token
-        const code = new URL(url).searchParams.get('code') || ''
-        const res = await this.getAccessToken({
-          code: code,
-          client_id: this.plugin.settings.clientId,
-          client_secret: this.plugin.settings.clientSecret,
+      } else {
+        // Desktop devices only
+        const {BrowserWindow} = require('@electron/remote')
+        const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+        codeUrl.search = new URLSearchParams({
+          scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+          include_granted_scopes: 'true',
+          response_type: 'code',
+          access_type: 'offline',
+          state: 'state_parameter_passthrough_value',
           redirect_uri: this.callbackUrl,
-          grant_type: 'authorization_code'
-        })
-        resolve(res)
-        if (window) window.close()
-      })
+          client_id: this.plugin.settings.clientId
+        }).toString()
 
-      window.on('closed', () => {
-        resolve(false)
-      })
+        // Load the Google OAuth request page in a browser window
+        const window = new BrowserWindow({
+          width: 600,
+          height: 800,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true
+          },
+        })
+        window.loadURL(codeUrl.href).then()
+
+        // Set up to watch for the callback URL
+        const {session: {webRequest}} = window.webContents
+        const filter = {
+          urls: [this.callbackUrl + '*']
+        }
+        webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
+          // Exchange the authorisation code for an access token
+          const code = new URL(url).searchParams.get('code') || ''
+          const res = await this.getAccessToken({
+            code: code,
+            client_id: this.plugin.settings.clientId,
+            client_secret: this.plugin.settings.clientSecret,
+            redirect_uri: this.callbackUrl,
+            grant_type: 'authorization_code'
+          })
+          resolve(res)
+          if (window) window.close()
+        })
+
+        window.on('closed', () => {
+          resolve(false)
+        })
+      }
     })
   }
 
