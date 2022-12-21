@@ -10,9 +10,9 @@ If your note title has a detectable date, you can have the plugin default to sho
 
 You can use Google Photos on a mobile device, but due to mobile limitations you will first need to connect to Google Photos from Obsidian using a desktop device.
 
-Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues.
+Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues. Specifically you need to transfer the `data.json` file from the desktop plugin folder to your mobile device.
 
-If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled.
+If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled for the `data.json` file to be transferred from your desktop to mobile device.
 
 # How to set up
 
