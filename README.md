@@ -1,8 +1,8 @@
 # Google Photos for Obsidian
 
-![](img/demo.gif)
-
 This plugin let's you embed Google Photos images directly into Obsidian. When you select an image, it will save and embed a low-res thumbnail with a link back to the full-res image on Google Photos.
+
+![](img/demo.gif)
 
 If your note title has a detectable date, you can have the plugin default to showing you only photos from that date. There is a toggle at the top to show all photos instead.
 
@@ -10,7 +10,7 @@ If your note title has a detectable date, you can have the plugin default to sho
 
 You can use Google Photos on a mobile device, but due to mobile limitations you will first need to connect to Google Photos from Obsidian using a desktop device.
 
-Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues. Specifically you need to transfer the `data.json` file from the desktop plugin folder to your mobile device.
+Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues. If you're using any sort of sync of your Obsidian vault, this should happen automatically. Specifically you need to transfer the `data.json` file from the desktop plugin folder to your mobile device.
 
 If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled for the `data.json` file to be transferred from your desktop to mobile device.
 
