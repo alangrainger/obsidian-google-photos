@@ -176,6 +176,12 @@ export class GridView extends Renderer {
     }
     this.fetching = true
     const targetEl = this.gridEl
+    /*
+    While:
+     + the active flag is enabled, and there are more results to fetch from Photos API, and there is a scrollable element
+     + the user is within 5 thumbnail's distance from the bottom of the scrollable element
+     + the scrollable element is visible in the viewport OR we have not yet loaded any thumbnails
+     */
     while (
       this.active && this.moreResults && this.scrollEl &&
       this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.thumbnailHeight) &&

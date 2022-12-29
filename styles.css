@@ -2,3 +2,12 @@ img.google-photos-grid {
     margin: 0 2px;
     padding: 0;
 }
+
+.google-photos-codeblock {
+    max-height: 500px;
+    overflow: scroll;
+}
+
+.google-photos-modal-grid {
+    width: 80%;
+}

@@ -47,8 +47,7 @@ export default class GooglePhotos extends Plugin {
     this.registerMarkdownCodeBlockProcessor('photos', (source, el) => {
       const grid = new GridView({plugin: this})
       el.appendChild(grid.containerEl)
-      grid.containerEl.style.maxHeight = '500px'
-      grid.containerEl.style.overflow = 'scroll'
+      grid.containerEl.addClass('google-photos-codeblock')
       try {
         if (source.trim()) grid.setSearchParams(JSON.parse(source))
       } catch (e) {
@@ -93,10 +92,12 @@ class GooglePhotosSettingTab extends PluginSettingTab {
 
     containerEl.empty()
     containerEl.createEl('h2', {text: 'Google Photos Settings'})
-    new Setting(containerEl).setName('Photos API').setHeading()
+
+    new Setting(containerEl)
+      .setName('Photos API')
+      .setHeading()
     new Setting(containerEl)
       .setName('Client ID')
-      .setDesc('')
       .addText(text => text
         .setPlaceholder('Enter your Client ID')
         .setValue(this.plugin.settings.clientId)
@@ -104,9 +105,21 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           this.plugin.settings.clientId = value.trim()
           await this.plugin.saveSettings()
         }))
+      .then(setting => {
+        setting.descEl.appendChild(
+          createFragment((frag) => {
+            frag.appendText('Client ID from Google Photos API.')
+            frag.createEl('br')
+            frag.createEl('a', {
+              text: 'See the documentation',
+              href: 'https://github.com/alangrainger/obsidian-google-photos',
+            })
+            frag.appendText(' for instructions on how to get this ID.')
+          })
+        )
+      })
     new Setting(containerEl)
       .setName('Client Secret')
-      .setDesc('')
       .addText(text => text
         .setPlaceholder('Enter your Client Secret')
         .setValue(this.plugin.settings.clientSecret)
@@ -114,17 +127,37 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           this.plugin.settings.clientSecret = value.trim()
           await this.plugin.saveSettings()
         }))
-    new Setting(containerEl).addButton(btn => btn
-      .setButtonText('Open Photos API auth')
-      .setCta()
-      .onClick(async () => {
-        await this.plugin.oauth.authenticate()
-      }))
-    new Setting(containerEl).setName('Settings').setHeading()
+      .then(setting => {
+        setting.descEl.appendChild(
+          createFragment((frag) => {
+            frag.appendText('Secret from Google Photos API.')
+            frag.createEl('br')
+            frag.createEl('a', {
+              text: 'See the documentation',
+              href: 'https://github.com/alangrainger/obsidian-google-photos',
+            })
+            frag.appendText(' for instructions on how to get this value.')
+          })
+        )
+      })
+    new Setting(containerEl)
+      .setDesc('Google Photos will automatically authenticate you when you start using the plugin. You can also manually initiate the authentication process by clicking this button.')
+      .addButton(btn => btn
+        .setButtonText('Open Photos API auth')
+        .setCta()
+        .onClick(async () => {
+          await this.plugin.oauth.authenticate()
+        }))
+
+    new Setting(containerEl)
+      .setName('Thumbnail settings')
+      .setHeading()
+      .setDesc('Set the maximum size for your locally-saved thumbnail image. The image will fit within these dimensions while keeping the original aspect ratio.')
     new Setting(containerEl)
       .setName('Thumbnail width')
-      .setDesc('')
+      .setDesc('Maximum width of the locally-saved thumbnail image in pixels')
       .addText(text => text
+        .setPlaceholder(DEFAULT_SETTINGS.thumbnailWidth.toString())
         .setValue(this.plugin.settings.thumbnailWidth.toString())
         .onChange(async (value) => {
           this.plugin.settings.thumbnailWidth = +value
@@ -132,8 +165,9 @@ class GooglePhotosSettingTab extends PluginSettingTab {
         }))
     new Setting(containerEl)
       .setName('Thumbnail height')
-      .setDesc('')
+      .setDesc('Maximum height of the locally-saved thumbnail image in pixels')
       .addText(text => text
+        .setPlaceholder(DEFAULT_SETTINGS.thumbnailHeight.toString())
         .setValue(this.plugin.settings.thumbnailHeight.toString())
         .onChange(async (value) => {
           this.plugin.settings.thumbnailHeight = +value
@@ -143,11 +177,35 @@ class GooglePhotosSettingTab extends PluginSettingTab {
       .setName('Image filename format')
       .setDesc('This is the filename format used for saving thumbnail images. It must be in MomentJS format.')
       .addText(text => text
+        .setPlaceholder(DEFAULT_SETTINGS.filename)
         .setValue(this.plugin.settings.filename)
         .onChange(async (value) => {
           this.plugin.settings.filename = value.trim()
           await this.plugin.saveSettings()
         }))
+      .then(setting => {
+        setting.descEl.appendChild(
+          createFragment((frag) => {
+            frag.createEl('br')
+            frag.createEl('br')
+            frag.appendText('The default value is')
+            frag.createEl('br')
+            frag.createEl('code', {text: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]'})
+            frag.createEl('br')
+            frag.appendText('which will save thumbnails in a format like:')
+            frag.createEl('br')
+            frag.createEl('br')
+            frag.appendText('2022-12-25_google-photo_182557.jpg')
+            frag.createEl('br')
+            frag.createEl('br')
+            frag.appendText('The date used is the "photo taken" date from the photo\'s metadata rather than the current date/time. This is to ensure that when you\'re adding photos to old journal entries, they are dated correctly and stored in your filesystem correctly.')
+          })
+        )
+      })
+
+    new Setting(containerEl)
+      .setName('Other  settings')
+      .setHeading()
     new Setting(containerEl)
       .setName('Default to showing photos from note date')
       .setDesc('If the plugin detects you are on a daily note, it can default to show you only photos from that date.')
@@ -161,8 +219,9 @@ class GooglePhotosSettingTab extends PluginSettingTab {
       })
     new Setting(containerEl)
       .setName('Daily note date format')
-      .setDesc('This is the MomentJS date format used in your daily notes, so we can parse them back to a date.')
+      .setDesc('This is the MomentJS date format used in the title of your daily notes, so we can parse them back to a date.')
       .addText(text => text
+        .setPlaceholder(DEFAULT_SETTINGS.parseNoteTitle)
         .setValue(this.plugin.settings.parseNoteTitle)
         .onChange(async (value) => {
           this.plugin.settings.parseNoteTitle = value.trim()
@@ -196,13 +255,16 @@ export class PhotosModal extends Modal {
       let {baseurl, producturl, filename} = event.target.dataset
       const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
       const folder = this.view.file.path.split('/').slice(0, -1).join('/')
-      this.close() // close the modal
+      // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
+      await this.gridView.resetGrid()
+      // Fetch the thumbnail from Google Photos
       const imageData = await requestUrl({url: src})
       await this.view.app.vault.adapter.writeBinary(folder + '/' + filename, imageData.arrayBuffer)
       this.editor.replaceRange(`[![](${filename})](${producturl})`, this.editor.getCursor())
     } catch (e) {
       console.log(e)
     }
+    this.close() // close the modal
     this.plugin.renderer.showWaitingCursor(false)
   }
 
@@ -210,7 +272,7 @@ export class PhotosModal extends Modal {
     const {contentEl, modalEl} = this
     if (Platform.isDesktop) {
       // Resize to fit the viewport width on desktop
-      modalEl.style.width = '80%'
+      modalEl.addClass('google-photos-modal-grid')
     }
     this.gridView = new GridView({
       scrollEl: modalEl,
