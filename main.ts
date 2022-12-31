@@ -106,17 +106,13 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings()
         }))
       .then(setting => {
-        setting.descEl.appendChild(
-          createFragment((frag) => {
-            frag.appendText('Client ID from Google Photos API.')
-            frag.createEl('br')
-            frag.createEl('a', {
-              text: 'See the documentation',
-              href: 'https://github.com/alangrainger/obsidian-google-photos',
-            })
-            frag.appendText(' for instructions on how to get this ID.')
-          })
-        )
+        setting.descEl.appendText('Client ID from Google Photos API.')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('a', {
+          text: 'See the documentation',
+          href: 'https://github.com/alangrainger/obsidian-google-photos',
+        })
+        setting.descEl.appendText(' for instructions on how to get this ID.')
       })
     new Setting(containerEl)
       .setName('Client Secret')
@@ -128,17 +124,13 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings()
         }))
       .then(setting => {
-        setting.descEl.appendChild(
-          createFragment((frag) => {
-            frag.appendText('Secret from Google Photos API.')
-            frag.createEl('br')
-            frag.createEl('a', {
-              text: 'See the documentation',
-              href: 'https://github.com/alangrainger/obsidian-google-photos',
-            })
-            frag.appendText(' for instructions on how to get this value.')
-          })
-        )
+        setting.descEl.appendText('Secret from Google Photos API.')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('a', {
+          text: 'See the documentation',
+          href: 'https://github.com/alangrainger/obsidian-google-photos',
+        })
+        setting.descEl.appendText(' for instructions on how to get this value.')
       })
     new Setting(containerEl)
       .setDesc('Google Photos will automatically authenticate you when you start using the plugin. You can also manually initiate the authentication process by clicking this button.')
@@ -175,7 +167,6 @@ class GooglePhotosSettingTab extends PluginSettingTab {
         }))
     new Setting(containerEl)
       .setName('Image filename format')
-      .setDesc('This is the filename format used for saving thumbnail images. It must be in MomentJS format.')
       .addText(text => text
         .setPlaceholder(DEFAULT_SETTINGS.filename)
         .setValue(this.plugin.settings.filename)
@@ -184,23 +175,26 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings()
         }))
       .then(setting => {
-        setting.descEl.appendChild(
-          createFragment((frag) => {
-            frag.createEl('br')
-            frag.createEl('br')
-            frag.appendText('The default value is')
-            frag.createEl('br')
-            frag.createEl('code', {text: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]'})
-            frag.createEl('br')
-            frag.appendText('which will save thumbnails in a format like:')
-            frag.createEl('br')
-            frag.createEl('br')
-            frag.appendText('2022-12-25_google-photo_182557.jpg')
-            frag.createEl('br')
-            frag.createEl('br')
-            frag.appendText('The date used is the "photo taken" date from the photo\'s metadata rather than the current date/time. This is to ensure that when you\'re adding photos to old journal entries, they are dated correctly and stored in your filesystem correctly.')
-          })
-        )
+        setting.descEl.appendText('This is the filename format used for saving thumbnail images. It must be in ')
+        setting.descEl.createEl('a', {
+          text: 'MomentJS format',
+          href: 'https://momentjs.com/docs/#/displaying/format/',
+        })
+        setting.descEl.appendText('.')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('br')
+        setting.descEl.appendText('The default value is')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('span', {cls: 'markdown-rendered'})
+          .createEl('code', {text: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]'})
+        setting.descEl.createEl('br')
+        setting.descEl.appendText('which will save thumbnails in a format like:')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('br')
+        setting.descEl.appendText('2022-12-25_google-photo_182557.jpg')
+        setting.descEl.createEl('br')
+        setting.descEl.createEl('br')
+        setting.descEl.appendText('The date used is the "photo taken" date from the photo\'s metadata rather than the current date/time. This is to ensure that when you\'re adding photos to old journal entries, they are dated correctly and stored in your filesystem correctly.')
       })
 
     new Setting(containerEl)
@@ -208,7 +202,7 @@ class GooglePhotosSettingTab extends PluginSettingTab {
       .setHeading()
     new Setting(containerEl)
       .setName('Default to showing photos from note date')
-      .setDesc('If the plugin detects you are on a daily note, it can default to show you only photos from that date.')
+      .setDesc('If the plugin detects you are on a daily note, it can default to show you photos from that date.')
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.defaultToDailyPhotos)
@@ -219,7 +213,6 @@ class GooglePhotosSettingTab extends PluginSettingTab {
       })
     new Setting(containerEl)
       .setName('Daily note date format')
-      .setDesc('This is the MomentJS date format used in the title of your daily notes, so we can parse them back to a date.')
       .addText(text => text
         .setPlaceholder(DEFAULT_SETTINGS.parseNoteTitle)
         .setValue(this.plugin.settings.parseNoteTitle)
@@ -227,6 +220,14 @@ class GooglePhotosSettingTab extends PluginSettingTab {
           this.plugin.settings.parseNoteTitle = value.trim()
           await this.plugin.saveSettings()
         }))
+      .then(setting => {
+        setting.descEl.appendText('This is the ')
+        setting.descEl.createEl('a', {
+          text: 'MomentJS date format',
+          href: 'https://momentjs.com/docs/#/displaying/format/',
+        })
+        setting.descEl.appendText(' used in the title of your daily notes, so we can parse them back to a date.')
+      })
   }
 }
 
