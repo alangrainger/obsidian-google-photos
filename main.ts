@@ -2,6 +2,7 @@ import { App, MarkdownView, Modal, Plugin, PluginSettingTab, Setting, moment, Ed
 import Renderer, { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
+import { FolderSuggest } from './suggesters/FolderSuggester'
 
 interface GooglePhotosSettings {
   clientId: string;
@@ -14,7 +15,8 @@ interface GooglePhotosSettings {
   filename: string;
   parseNoteTitle: string;
   defaultToDailyPhotos: boolean;
-  saveLocation: string;
+  locationOption: string;
+  locationFolder: string;
 }
 
 const DEFAULT_SETTINGS: GooglePhotosSettings = {
@@ -28,7 +30,8 @@ const DEFAULT_SETTINGS: GooglePhotosSettings = {
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
   parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
-  saveLocation: 'note'
+  locationOption: 'note',
+  locationFolder: ''
 }
 
 export default class GooglePhotos extends Plugin {
@@ -98,6 +101,15 @@ class GooglePhotosSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Photos API')
       .setHeading()
+
+    /**
+     * Show or hide a setting item
+     * @param {Setting} setting
+     * @param {boolean} visible
+     */
+    const setVisible = (setting: Setting, visible: Boolean) => {
+      setting.settingEl.style.display = visible ? 'flex' : 'none'
+    }
 
     /*
      Google Photos API connection
@@ -207,18 +219,44 @@ class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.createEl('br')
         setting.descEl.appendText('The date used is the "photo taken" date from the photo\'s metadata rather than the current date/time. This is to ensure that when you\'re adding photos to old journal entries, they are dated correctly and stored in your filesystem correctly.')
       })
-    new Setting(this.containerEl)
+    const locationOptionEl = new Setting(this.containerEl)
+    const locationFolderEl = new Setting(this.containerEl)
+      .setName('Thumbnail image folder')
+      .setDesc('Thumbnails will be saved to this folder')
+      /*.addText(text => text
+        .setPlaceholder('Path/For/Thumbnails')
+        .setValue(this.plugin.settings.locationFolder)
+        .onChange(async (value) => {
+          this.plugin.settings.locationFolder = value.trim()
+          await this.plugin.saveSettings()
+        }))*/
+      .addSearch((cb) => {
+        new FolderSuggest(cb.inputEl)
+        cb.setPlaceholder('Path/For/Thumbnails')
+          .setValue(this.plugin.settings.locationFolder)
+          .onChange(async (value) => {
+            this.plugin.settings.locationFolder = value.trim()
+            await this.plugin.saveSettings()
+          })
+      })
+    locationOptionEl
       .setName('Location to save thumbnails')
       .setDesc('Where the local thumbnail images will be saved')
       .addDropdown(dropdown => {
         dropdown
           .addOption('note', 'Same folder as the note')
           .addOption('specified', 'In the folder specified below')
-          .setValue(this.plugin.settings.saveLocation)
+          .setValue(this.plugin.settings.locationOption)
           .onChange(async (value) => {
-            this.plugin.settings.saveLocation = value
+            // Show or hide the folder input field, depending on the choice
+            setVisible(locationFolderEl, value === 'specified')
+            this.plugin.settings.locationOption = value
             await this.plugin.saveSettings()
           })
+      })
+      .then(() => {
+        // Set the default visibility for the folder input field
+        setVisible(locationFolderEl, this.plugin.settings.locationOption === 'specified')
       })
 
     /*
@@ -283,13 +321,20 @@ export class PhotosModal extends Modal {
     try {
       let {baseurl, producturl, filename} = event.target.dataset
       const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
-      const folder = this.view.file.path.split('/').slice(0, -1).join('/')
+      const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
+      // Use the note folder or the user-specified folder from Settings
+      let thumbnailFolder = this.plugin.settings.locationOption === 'specified' ? this.plugin.settings.locationFolder : noteFolder
+      thumbnailFolder = thumbnailFolder.replace(/^\//, '') // remove any leading slash
       // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
       await this.gridView.resetGrid()
       // Fetch the thumbnail from Google Photos
       const imageData = await requestUrl({url: src})
-      await this.view.app.vault.adapter.writeBinary(folder + '/' + filename, imageData.arrayBuffer)
-      this.editor.replaceRange(`[![](${filename})](${producturl})`, this.editor.getCursor())
+      await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + filename, imageData.arrayBuffer)
+      const cursorPosition = this.editor.getCursor()
+      const linkText = `[![](${filename})](${producturl}) `
+      this.editor.replaceRange(linkText, cursorPosition)
+      // Move the cursor to the end of the thumbnail link after pasting
+      this.editor.setCursor(cursorPosition.ch + linkText.length)
     } catch (e) {
       console.log(e)
     }
@@ -310,7 +355,7 @@ export class PhotosModal extends Modal {
     })
 
     // Check for a valid date from the note title
-    this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle)
+    this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle, true)
     if (this.noteDate.isValid()) {
       // The currently open note has a parsable date
       const dailyNoteParams = {
