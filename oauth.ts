@@ -108,7 +108,6 @@ export default class OAuth {
       const {access_token, refresh_token, expires_in} = await res.json()
       this.plugin.settings.accessToken = access_token
       if (refresh_token) {
-        console.log('Google Photos: saving refresh token ' + refresh_token)
         this.plugin.settings.refreshToken = refresh_token
       }
       this.plugin.settings.expires = moment().add(expires_in, 'second').format()
