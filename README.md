@@ -1,8 +1,10 @@
 # Google Photos for Obsidian
 
-![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos)
-![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square)
-![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
+![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S0EM3AQ)
+
+---
 
 This plugin let's you embed Google Photos images directly into Obsidian. When you select an image, it will save and embed a low-res thumbnail with a link back to the full-res image on Google Photos.
 
