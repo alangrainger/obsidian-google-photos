@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   locationFolder: ''
 }
 
-export default class GooglePhotosSettingTab extends PluginSettingTab {
+export class GooglePhotosSettingTab extends PluginSettingTab {
   plugin: GooglePhotos
 
   constructor (app: App, plugin: GooglePhotos) {
