@@ -15,6 +15,7 @@ export interface GooglePhotosSettings {
   defaultToDailyPhotos: boolean;
   locationOption: string;
   locationFolder: string;
+  locationSubfolder: string;
 }
 
 export const DEFAULT_SETTINGS: GooglePhotosSettings = {
@@ -29,7 +30,8 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
   locationOption: 'note',
-  locationFolder: ''
+  locationFolder: '',
+  locationSubfolder: 'photos'
 }
 
 export class GooglePhotosSettingTab extends PluginSettingTab {
@@ -180,17 +182,32 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings()
           })
       })
+    const locationSubfolderEl = new Setting(this.containerEl)
+      .setName('Subfolder name')
+      .setDesc('If your current note is in "Journal/Daily" and you set the subfolder name to "photos", the thumbnails will be saved in "Journal/Daily/photos".')
+      .addText(text => {
+        text
+          .setPlaceholder('photos')
+          .setValue(this.plugin.settings.locationSubfolder)
+          .onChange(async (value) => {
+            // Strip leading/trailing slashes
+            this.plugin.settings.locationSubfolder = value.trim().replace(/^[\\\/]+/, '').replace(/[\\\/]+$/, '')
+            await this.plugin.saveSettings()
+          })
+      })
     locationOptionEl
       .setName('Location to save thumbnails')
       .setDesc('Where the local thumbnail images will be saved')
       .addDropdown(dropdown => {
         dropdown
           .addOption('note', 'Same folder as the note')
-          .addOption('specified', 'In the folder specified below')
+          .addOption('subfolder', 'In a subfolder of the current note')
+          .addOption('specified', 'In a specific folder')
           .setValue(this.plugin.settings.locationOption)
           .onChange(async (value) => {
             // Show or hide the folder input field, depending on the choice
             setVisible(locationFolderEl, value === 'specified')
+            setVisible(locationSubfolderEl, value === 'subfolder')
             this.plugin.settings.locationOption = value
             await this.plugin.saveSettings()
           })
@@ -198,6 +215,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .then(() => {
         // Set the default visibility for the folder input field
         setVisible(locationFolderEl, this.plugin.settings.locationOption === 'specified')
+        setVisible(locationSubfolderEl, this.plugin.settings.locationOption === 'subfolder')
       })
 
     /*

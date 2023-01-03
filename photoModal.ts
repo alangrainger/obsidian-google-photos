@@ -30,8 +30,16 @@ export class PhotosModal extends Modal {
       const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
       const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
       // Use the note folder or the user-specified folder from Settings
-      let thumbnailFolder = this.plugin.settings.locationOption === 'specified' ? this.plugin.settings.locationFolder : noteFolder
-      thumbnailFolder = thumbnailFolder.replace(/^\//, '') // remove any leading slash
+      let thumbnailFolder = noteFolder
+      switch (this.plugin.settings.locationOption) {
+        case 'specified':
+          thumbnailFolder = this.plugin.settings.locationFolder
+          break
+        case'subfolder':
+          thumbnailFolder = noteFolder + '/' + this.plugin.settings.locationSubfolder
+          break
+      }
+      thumbnailFolder = thumbnailFolder.replace(/^\/+/, '').replace(/\/+$/, '') // remove any leading/trailing slashes
       // Check to see if the destination folder exists
       const vault = this.view.app.vault
       if (!await vault.adapter.exists(thumbnailFolder)) {
