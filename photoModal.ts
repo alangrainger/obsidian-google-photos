@@ -22,7 +22,6 @@ export class PhotosModal extends Modal {
    * @param event
    */
   async insertImageIntoEditor (event: { target: HTMLImageElement }) {
-    this.plugin.renderer.showWaitingCursor(true)
     try {
       // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
       await this.gridView.resetGrid()
@@ -31,12 +30,17 @@ export class PhotosModal extends Modal {
       const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
       // Use the note folder or the user-specified folder from Settings
       let thumbnailFolder = noteFolder
+      let linkPath = filename
       switch (this.plugin.settings.locationOption) {
         case 'specified':
           thumbnailFolder = this.plugin.settings.locationFolder
+          // Set the Markdown image path to be the full specified path + filename
+          linkPath = thumbnailFolder + '/' + filename
           break
-        case'subfolder':
+        case 'subfolder':
           thumbnailFolder = noteFolder + '/' + this.plugin.settings.locationSubfolder
+          // Set the Markdown image path to be the subfolder + filename
+          linkPath = this.plugin.settings.locationSubfolder + '/' + filename
           break
       }
       thumbnailFolder = thumbnailFolder.replace(/^\/+/, '').replace(/\/+$/, '') // remove any leading/trailing slashes
@@ -50,7 +54,7 @@ export class PhotosModal extends Modal {
       const imageData = await requestUrl({url: src})
       await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + filename, imageData.arrayBuffer)
       const cursorPosition = this.editor.getCursor()
-      const linkText = `[![](${filename})](${producturl}) `
+      const linkText = `[![](${linkPath})](${producturl}) `
       this.editor.replaceRange(linkText, cursorPosition)
       // Move the cursor to the end of the thumbnail link after pasting
       this.editor.setCursor(cursorPosition.ch + linkText.length)
@@ -58,7 +62,6 @@ export class PhotosModal extends Modal {
       console.log(e)
     }
     this.close() // close the modal
-    this.plugin.renderer.showWaitingCursor(false)
   }
 
   async onOpen () {
