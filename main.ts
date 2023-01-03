@@ -14,6 +14,7 @@ interface GooglePhotosSettings {
   filename: string;
   parseNoteTitle: string;
   defaultToDailyPhotos: boolean;
+  saveLocation: string;
 }
 
 const DEFAULT_SETTINGS: GooglePhotosSettings = {
@@ -26,7 +27,8 @@ const DEFAULT_SETTINGS: GooglePhotosSettings = {
   thumbnailHeight: 280,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
   parseNoteTitle: 'YYYY-MM-DD',
-  defaultToDailyPhotos: true
+  defaultToDailyPhotos: true,
+  saveLocation: 'note'
 }
 
 export default class GooglePhotos extends Plugin {
@@ -96,6 +98,11 @@ class GooglePhotosSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Photos API')
       .setHeading()
+
+    /*
+     Google Photos API connection
+     */
+
     new Setting(containerEl)
       .setName('Client ID')
       .addText(text => text
@@ -140,6 +147,10 @@ class GooglePhotosSettingTab extends PluginSettingTab {
         .onClick(async () => {
           await this.plugin.oauth.authenticate()
         }))
+
+    /*
+     Thumbnail settings
+     */
 
     new Setting(containerEl)
       .setName('Thumbnail settings')
@@ -196,6 +207,23 @@ class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.createEl('br')
         setting.descEl.appendText('The date used is the "photo taken" date from the photo\'s metadata rather than the current date/time. This is to ensure that when you\'re adding photos to old journal entries, they are dated correctly and stored in your filesystem correctly.')
       })
+    new Setting(this.containerEl)
+      .setName('Location to save thumbnails')
+      .setDesc('Where the local thumbnail images will be saved')
+      .addDropdown(dropdown => {
+        dropdown
+          .addOption('note', 'Same folder as the note')
+          .addOption('specified', 'In the folder specified below')
+          .setValue(this.plugin.settings.saveLocation)
+          .onChange(async (value) => {
+            this.plugin.settings.saveLocation = value
+            await this.plugin.saveSettings()
+          })
+      })
+
+    /*
+     Other settings
+     */
 
     new Setting(containerEl)
       .setName('Other  settings')
