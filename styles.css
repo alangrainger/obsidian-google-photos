@@ -11,3 +11,7 @@ img.google-photos-grid {
 .google-photos-modal-grid {
     width: 80%;
 }
+
+.google-photos-fit-content {
+    width: fit-content;
+}

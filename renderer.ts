@@ -24,20 +24,6 @@ export default class Renderer {
     this.spinner.style.transform = 'scale(0.5)'
   }
 
-  /**
-   * Simple wrapper for document.createElement to make replicating Obsidian DOM elements faster
-   * @param {string} type - Element type: div, span, etc
-   * @param {string} classes - String of classes which are copy/pasted from the DOM
-   * @param {HTMLElement} parent - Parent to 'appendChild' the new element
-   * @return Returns the newly created element
-   */
-  createElement (type: string, classes: string, parent: HTMLElement) {
-    const el = document.createElement(type)
-    if (classes) el.addClasses(classes.split(' '))
-    parent.appendChild(el)
-    return el
-  }
-
   isVisible (el: HTMLElement) {
     return new Promise(resolve => {
       const o = new IntersectionObserver(([entry]) => {
@@ -68,39 +54,6 @@ export default class Renderer {
       // Output to Obsidian
       el.appendChild(img)
     })
-  }
-
-  createCheckbox (parentEl: HTMLElement, title: string, callback: (state: boolean) => void) {
-    const outer = this.createElement('div', 'setting-item mod-toggle', parentEl)
-    outer.style.marginBottom = '10px'
-    outer.style.width = 'fit-content'
-    const settingInfo = this.createElement('div', 'setting-item-info', outer)
-    const name = this.createElement('div', 'setting-item-name', settingInfo)
-    name.innerText = title
-    this.createElement('div', 'setting-item-description', settingInfo)
-    const settingControl = this.createElement('div', 'setting-item-control', outer)
-    const checkboxContainer = this.createElement('div', 'checkbox-container is-enabled', settingControl)
-    const input = document.createElement('input')
-    input.type = 'checkbox'
-    checkboxContainer.appendChild(input)
-    // Watch for click events and reset the photo grid
-    checkboxContainer.onclick = () => {
-      if (checkboxContainer.classList.contains('is-enabled')) {
-        // Currently enabled, so disable
-        checkboxContainer.removeClass('is-enabled')
-        callback(false)
-      } else {
-        // Currently disabled, so enable
-        checkboxContainer.addClass('is-enabled')
-        callback(true)
-      }
-    }
-    return outer
-  }
-
-  showWaitingCursor (state: boolean) {
-    // Set spinner cursor
-    document.body.style.cursor = state ? 'wait' : 'default'
   }
 }
 

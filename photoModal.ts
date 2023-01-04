@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl } from 'obsidian'
+import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting } from 'obsidian'
 import { GridView } from './renderer'
 import GooglePhotos from './main'
 
@@ -98,16 +98,23 @@ export class PhotosModal extends Modal {
       }
 
       // Create the checkbox to switch between today / all photos
-      this.plugin.renderer.createCheckbox(contentEl, 'Limit photos to ' + this.noteDate.format('dddd, MMMM D'), checked => {
-        if (checked) {
-          this.gridView.setSearchParams(dailyNoteParams)
-        } else {
-          this.gridView.clearSearchParams()
-        }
-        this.limitPhotosToNoteDate = checked
-        this.gridView.resetGrid()
-        this.gridView.getThumbnails()
-      })
+      new Setting(contentEl)
+        .setName('Limit photos to ' + this.noteDate.format('dddd, MMMM D'))
+        .setClass('google-photos-fit-content')
+        .addToggle(toggle => {
+          toggle
+            .setValue(this.plugin.settings.defaultToDailyPhotos)
+            .onChange(checked => {
+              if (checked) {
+                this.gridView.setSearchParams(dailyNoteParams)
+              } else {
+                this.gridView.clearSearchParams()
+              }
+              this.limitPhotosToNoteDate = checked
+              this.gridView.resetGrid()
+              this.gridView.getThumbnails()
+            })
+        })
     }
 
     // Attach the grid view to the modal
