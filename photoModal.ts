@@ -25,7 +25,7 @@ export class PhotosModal extends Modal {
     try {
       // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
       await this.gridView.resetGrid()
-      let {baseurl, producturl, filename} = event.target.dataset
+      let {baseurl, producturl, filename = ''} = event.target.dataset
       const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
       const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
       // Use the note folder or the user-specified folder from Settings
@@ -44,6 +44,7 @@ export class PhotosModal extends Modal {
           break
       }
       thumbnailFolder = thumbnailFolder.replace(/^\/+/, '').replace(/\/+$/, '') // remove any leading/trailing slashes
+      linkPath = encodeURI(linkPath)
       // Check to see if the destination folder exists
       const vault = this.view.app.vault
       if (!await vault.adapter.exists(thumbnailFolder)) {
