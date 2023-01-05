@@ -14,7 +14,6 @@ export default class GooglePhotos extends Plugin {
   async onload () {
     await this.loadSettings()
 
-    this.renderer = new Renderer(this)
     this.photosApi = new PhotosApi(this)
     this.oauth = new OAuth(this)
 

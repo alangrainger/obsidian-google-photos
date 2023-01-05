@@ -20,7 +20,7 @@ export default class Renderer {
       <circle cx="50" cy="50" r="10" fill="#f2b736"><animate attributeName="r" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;10;10;10" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.4807692307692307s"></animate><animate attributeName="cx" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.4807692307692307s"></animate></circle>
       <circle cx="84" cy="50" r="10" fill="#499255"><animate attributeName="r" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;10;10;10" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.9615384615384615s"></animate><animate attributeName="cx" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-0.9615384615384615s"></animate></circle>
       <circle cx="16" cy="50" r="10" fill="#1875e5"><animate attributeName="r" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="0;0;10;10;10" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-1.4423076923076923s"></animate><animate attributeName="cx" repeatCount="indefinite" dur="1.923076923076923s" calcMode="spline" keyTimes="0;0.25;0.5;0.75;1" values="16;16;16;50;84" keySplines="0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1;0 0.5 0.5 1" begin="-1.4423076923076923s"></animate></circle></svg>`
-    this.spinner.toggleVisibility(false)
+    this.spinner.style.display = 'none'
     this.spinner.style.transform = 'scale(0.5)'
   }
 
@@ -50,7 +50,7 @@ export default class Renderer {
       const {creationTime} = mediaMetadata
       img.dataset.filename = moment(creationTime).format(this.plugin.settings.filename)
       img.onclick = onclick
-      img.classList.add('google-photos-grid')
+      img.classList.add('google-photos-grid-thumbnail')
       // Output to Obsidian
       el.appendChild(img)
     })
@@ -85,7 +85,7 @@ export class GridView extends Renderer {
     this.gridEl = this.containerEl.createEl('div')
     // Add the loading spinner
     this.containerEl.appendChild(this.spinner)
-    this.spinner.toggleVisibility(true)
+    this.spinner.style.display = 'block'
 
     // Watch for a scroll event
     this.scrollEl = scrollEl || this.containerEl
@@ -96,7 +96,7 @@ export class GridView extends Renderer {
    * Reset the photo-grid view to a blank state
    */
   async resetGrid () {
-    this.spinner.toggleVisibility(true)
+    this.spinner.style.display = 'block'
     const oldGrid = this.gridEl
     oldGrid.empty()
     this.gridEl = document.createElement('div')
@@ -148,9 +148,13 @@ export class GridView extends Renderer {
         if (mediaItems) {
           // console.log(`appending ${mediaItems.length} items`)
           this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
+        } else if (!targetEl.childElementCount) {
+          targetEl.createEl('p', {
+            text: 'No photos found for this query.'
+          })
         }
         this.moreResults = !!nextPageToken
-        this.spinner.toggleVisibility(this.moreResults)
+        this.spinner.style.display = this.moreResults ? 'block' : 'none'
         this.nextPageToken = nextPageToken
       } catch (e) {
         // Unable to fetch results from Photos API
@@ -165,7 +169,13 @@ export class GridView extends Renderer {
           if (e === 'Unauthenticated') {
             this.active = false
             new Notice('Failed to authenticate')
+          } else {
+            // Add the error message to the photos grid
+            targetEl.createEl('p', {
+              text: e
+            })
           }
+          this.spinner.style.display = 'none'
           break
         }
       }
