@@ -16,7 +16,7 @@ You can use Google Photos on a mobile device, but due to mobile limitations you 
 
 Once your desktop is authenticated, you can sync the plugin settings to your mobile device and it will work without any issues. If you're using any sort of sync of your Obsidian vault, this should happen automatically. Specifically you need to transfer the `data.json` file from the desktop plugin folder to your mobile device.
 
-If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled for the `data.json` file to be transferred from your desktop to mobile device.
+If you're using Obsidian Sync, you'll need to make sure the **Installed community plugins** sync option is enabled on both your desktop and mobile device for the settings to be transferred correctly.
 
 # How to set up
 

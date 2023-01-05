@@ -58,7 +58,7 @@ export class PhotosModal extends Modal {
       const linkText = `[![](${linkPath})](${producturl}) `
       this.editor.replaceRange(linkText, cursorPosition)
       // Move the cursor to the end of the thumbnail link after pasting
-      this.editor.setCursor(cursorPosition.ch + linkText.length)
+      this.editor.setCursor({line: cursorPosition.line, ch: cursorPosition.ch + linkText.length})
     } catch (e) {
       console.log(e)
     }
