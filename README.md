@@ -78,6 +78,14 @@ For example, if you wanted to show photos of food taken on every April 1st, you 
 ```
 ````
 
+# Adjusting the visual style
+
+If you want to adjust the styles, these are the classes used:
+
+`.google-photos-grid-thumbnail` - the thumbnail images
+`.google-photos-codeblock` - the embedded codeblock container
+`.google-photos-modal-grid` - the popup modal grid container
+
 ---
 
 ### Attribution
