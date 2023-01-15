@@ -7,8 +7,6 @@ export class PhotosModal extends Modal {
   gridView: GridView
   editor: Editor
   view: MarkdownView
-  noteDate: moment.Moment
-  limitPhotosToNoteDate: boolean = true
 
   constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
     super(app)
@@ -63,6 +61,19 @@ export class PhotosModal extends Modal {
       console.log(e)
     }
     this.close() // close the modal
+  }
+
+  onClose () {
+    this.gridView?.destroy()
+  }
+}
+
+export class DailyPhotosModal extends PhotosModal {
+  noteDate: moment.Moment
+  limitPhotosToNoteDate: boolean = true
+
+  constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
+    super(app, plugin, editor, view)
   }
 
   async onOpen () {
@@ -123,9 +134,29 @@ export class PhotosModal extends Modal {
     // Start fetching thumbnails!
     await this.gridView.getThumbnails()
   }
+}
 
-  onClose () {
-    // const {contentEl} = this
-    this.gridView.destroy()
+export class ShowAlbumsModal extends PhotosModal {
+
+  constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
+    super(app, plugin, editor, view)
+  }
+
+  async onOpen () {
+    const {contentEl, modalEl} = this
+    if (Platform.isDesktop) {
+      // Resize to fit the viewport width on desktop
+      modalEl.addClass('google-photos-modal-grid')
+    }
+    this.gridView = new GridView({
+      scrollEl: modalEl,
+      plugin: this.plugin
+    })
+
+    // Attach the grid view to the modal
+    contentEl.appendChild(this.gridView.containerEl)
+
+    // Start fetching thumbnails!
+    await this.gridView.getThumbnails()
   }
 }

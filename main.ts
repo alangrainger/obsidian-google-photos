@@ -1,13 +1,12 @@
 import { MarkdownView, Plugin, Editor } from 'obsidian'
-import Renderer, { GridView } from './renderer'
+import { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS } from './settings'
-import { PhotosModal } from './photoModal'
+import { DailyPhotosModal } from './photoModal'
 
 export default class GooglePhotos extends Plugin {
   settings: GooglePhotosSettings
-  renderer: Renderer
   photosApi: PhotosApi
   oauth: OAuth
 
@@ -37,7 +36,7 @@ export default class GooglePhotos extends Plugin {
       editorCallback: (editor: Editor, view: MarkdownView) => {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new PhotosModal(this.app, this, editor, view).open()
+          new DailyPhotosModal(this.app, this, editor, view).open()
         }
       }
     })
