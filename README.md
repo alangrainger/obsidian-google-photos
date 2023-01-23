@@ -86,6 +86,14 @@ If you want to adjust the styles, these are the classes used:
 `.google-photos-codeblock` - the embedded codeblock container
 `.google-photos-modal-grid` - the popup modal grid container
 
+# FAQs
+
+#### Do the images have to be saved locally? Can they be remote thumbnails?
+
+The way that Photos API generates the URLs, the direct image links are only available for a short time and then they expire. So while you could add them to your notes, they would stop working at some point.
+
+I'm testing a few potential options at the moment, but it takes time to wait out the link expiry (or non-expiry, if it works).
+
 ---
 
 ### Attribution
