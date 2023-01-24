@@ -145,7 +145,6 @@ export class GridView extends Renderer {
         const localOptions = Object.assign({}, this.searchParams)
         if (this.nextPageToken) Object.assign(localOptions, {pageToken: this.nextPageToken})
         const {mediaItems, nextPageToken} = await this.plugin.photosApi.mediaItemsSearch(localOptions)
-        console.log(await this.plugin.photosApi.listAlbums())
         if (mediaItems) {
           // console.log(`appending ${mediaItems.length} items`)
           this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))

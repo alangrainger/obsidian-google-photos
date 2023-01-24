@@ -148,15 +148,7 @@ export class ShowAlbumsModal extends PhotosModal {
       // Resize to fit the viewport width on desktop
       modalEl.addClass('google-photos-modal-grid')
     }
-    this.gridView = new GridView({
-      scrollEl: modalEl,
-      plugin: this.plugin
-    })
 
-    // Attach the grid view to the modal
-    contentEl.appendChild(this.gridView.containerEl)
-
-    // Start fetching thumbnails!
-    await this.gridView.getThumbnails()
+    console.log(await this.plugin.photosApi.listAlbums())
   }
 }
