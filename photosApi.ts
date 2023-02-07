@@ -60,7 +60,13 @@ export default class PhotosApi {
    */
   async mediaItemsSearch (options = {}) {
     return this.request('/v1/mediaItems:search', {
+      method: 'POST',
       body: JSON.stringify(options)
+    })
+  }
+  async listAlbums () {
+    return this.request('/v1/albums', {
+      method: 'GET'
     })
   }
 }
