@@ -11,6 +11,7 @@ export interface GooglePhotosSettings {
   thumbnailWidth: number;
   thumbnailHeight: number;
   filename: string;
+  insertedMarkdown: string;
   parseNoteTitle: string;
   defaultToDailyPhotos: boolean;
   locationOption: string;
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   thumbnailWidth: 400,
   thumbnailHeight: 280,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
+  insertedMarkdown: '[![]({{LOCAL_THUMBNAIL_LINK}})]({{GOOGLE_PHOTO_LINK}}) ',
   parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
   locationOption: 'note',
