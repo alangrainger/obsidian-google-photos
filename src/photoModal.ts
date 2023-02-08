@@ -1,6 +1,7 @@
 import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting } from 'obsidian'
 import { GridView } from './renderer'
 import GooglePhotos from './main'
+import { handlebarParse } from './handlebars'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -53,7 +54,10 @@ export class PhotosModal extends Modal {
       const imageData = await requestUrl({url: src})
       await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + filename, imageData.arrayBuffer)
       const cursorPosition = this.editor.getCursor()
-      const linkText = `[![](${linkPath})](${producturl}) `
+      const linkText = handlebarParse(this.plugin.settings.thumbnailMarkdown, {
+        local_thumbnail_link: linkPath,
+        google_photo_link: producturl
+      })
       this.editor.replaceRange(linkText, cursorPosition)
       // Move the cursor to the end of the thumbnail link after pasting
       this.editor.setCursor({line: cursorPosition.line, ch: cursorPosition.ch + linkText.length})
