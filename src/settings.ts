@@ -11,6 +11,7 @@ export interface GooglePhotosSettings {
   thumbnailWidth: number;
   thumbnailHeight: number;
   filename: string;
+  thumbnailMarkdown: string;
   parseNoteTitle: string;
   defaultToDailyPhotos: boolean;
   locationOption: string;
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   thumbnailWidth: 400,
   thumbnailHeight: 280,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
+  thumbnailMarkdown: '[![]({{local_thumbnail_link}})]({{google_photo_url}) ',
   parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
   locationOption: 'note',
@@ -216,6 +218,23 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         // Set the default visibility for the folder input field
         setVisible(locationFolderEl, this.plugin.settings.locationOption === 'specified')
         setVisible(locationSubfolderEl, this.plugin.settings.locationOption === 'subfolder')
+      })
+    new Setting(containerEl)
+      .setName('Inserted Markdown')
+      .setDesc('This will be the text inserted when adding a thumbnail. You can use these variables:')
+      .addTextArea(text => text
+        .setPlaceholder(DEFAULT_SETTINGS.thumbnailMarkdown)
+        .setValue(this.plugin.settings.thumbnailMarkdown)
+        .onChange(async (value) => {
+          this.plugin.settings.thumbnailMarkdown = value
+          await this.plugin.saveSettings()
+        }))
+      .then(setting => {
+        const ul = setting.descEl.createEl('ul')
+        ul.createEl('li').setText('local_thumbnail_link - The path to the locally saved thumbnail image')
+        ul.createEl('li').setText('google_photo_url - The URL to the original Google Photo')
+        ul.createEl('li').setText('google_base_url - Advanced variable, see Photos API docs')
+        ul.createEl('li').setText('google_photo_id - Advanced variable, see Photos API docs')
       })
 
     /*

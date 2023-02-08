@@ -41,10 +41,11 @@ export default class Renderer {
    * @param {function} onclick
    */
   appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
-    (thumbnails || []).forEach(({productUrl, baseUrl, mediaMetadata}) => {
+    (thumbnails || []).forEach(({id, productUrl, baseUrl, mediaMetadata}) => {
       // Image element
       const img = new Image()
       img.src = baseUrl + `=w500-h130`
+      img.dataset.photoid = id
       img.dataset.baseurl = baseUrl
       img.dataset.producturl = productUrl
       const {creationTime} = mediaMetadata
