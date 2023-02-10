@@ -2,6 +2,8 @@ import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting
 import { GridView } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
+import Litepicker from 'litepicker'
+import { Moment } from 'moment'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -82,6 +84,20 @@ export class DailyPhotosModal extends PhotosModal {
     super(app, plugin, editor, view)
   }
 
+  dateFilter (date: Moment) {
+    return {
+      filters: {
+        dateFilter: {
+          dates: [{
+            year: +date.format('YYYY'),
+            month: +date.format('M'),
+            day: +date.format('D')
+          }]
+        }
+      }
+    }
+  }
+
   async onOpen () {
     const {contentEl, modalEl} = this
     if (Platform.isDesktop) {
@@ -97,18 +113,15 @@ export class DailyPhotosModal extends PhotosModal {
     // Check for a valid date from the note title
     this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle, true)
     if (this.noteDate.isValid()) {
+      const datePicker = new Litepicker({
+        element: contentEl.createEl('input', {type: 'text', value: this.noteDate.format('YYYY-MM-DD')})
+      })
+      datePicker.on('selected', date => {
+        this.gridView.setSearchParams(this.dateFilter(date))
+      })
+
       // The currently open note has a parsable date
-      const dailyNoteParams = {
-        filters: {
-          dateFilter: {
-            dates: [{
-              year: +this.noteDate.format('YYYY'),
-              month: +this.noteDate.format('M'),
-              day: +this.noteDate.format('D')
-            }]
-          }
-        }
-      }
+      const dailyNoteParams = this.dateFilter(this.noteDate)
       if (this.plugin.settings.defaultToDailyPhotos) {
         // Set the default view to show photos from today
         this.gridView.setSearchParams(dailyNoteParams)
