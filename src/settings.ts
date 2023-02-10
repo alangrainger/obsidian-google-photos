@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   thumbnailWidth: 400,
   thumbnailHeight: 280,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
-  thumbnailMarkdown: '[![]({{local_thumbnail_link}})]({{google_photo_url}) ',
+  thumbnailMarkdown: '[![]({{local_thumbnail_link}})]({{google_photo_url}}) ',
   parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
   locationOption: 'note',
