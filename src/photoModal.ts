@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting } from 'obsidian'
+import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting, ToggleComponent } from 'obsidian'
 import { GridView } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
@@ -78,24 +78,47 @@ export class PhotosModal extends Modal {
 
 export class DailyPhotosModal extends PhotosModal {
   noteDate: moment.Moment
-  limitPhotosToNoteDate: boolean = true
+  limitPhotosToNoteDate: boolean = false
+  dateSetting: Setting
+  dateToggle: ToggleComponent
 
   constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
     super(app, plugin, editor, view)
   }
 
   dateFilter (date: Moment) {
-    return {
-      filters: {
-        dateFilter: {
-          dates: [{
-            year: +date.format('YYYY'),
-            month: +date.format('M'),
-            day: +date.format('D')
-          }]
+    return
+  }
+
+  /**
+   * Update the human-readable date toggle text
+   */
+  updateDateText () {
+    this.dateSetting?.setName('Limit photos to ' + this.noteDate.format('dddd, MMMM D') + ' 📅')
+  }
+
+  /**
+   * Update the date filter (if needed) and reset the photo grid
+   */
+  async updateView () {
+    if (this.limitPhotosToNoteDate) {
+      this.updateDateText()
+      this.gridView.setSearchParams({
+        filters: {
+          dateFilter: {
+            dates: [{
+              year: +this.noteDate.format('YYYY'),
+              month: +this.noteDate.format('M'),
+              day: +this.noteDate.format('D')
+            }]
+          }
         }
-      }
+      })
+    } else {
+      this.gridView.clearSearchParams()
     }
+    await this.gridView.resetGrid()
+    this.gridView.getThumbnails().then()
   }
 
   async onOpen () {
@@ -113,45 +136,49 @@ export class DailyPhotosModal extends PhotosModal {
     // Check for a valid date from the note title
     this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle, true)
     if (this.noteDate.isValid()) {
-      const datePicker = new Litepicker({
-        element: contentEl.createEl('input', {type: 'text', value: this.noteDate.format('YYYY-MM-DD')})
-      })
-      datePicker.on('selected', date => {
-        this.gridView.setSearchParams(this.dateFilter(date))
-      })
-
       // The currently open note has a parsable date
-      const dailyNoteParams = this.dateFilter(this.noteDate)
       if (this.plugin.settings.defaultToDailyPhotos) {
         // Set the default view to show photos from today
-        this.gridView.setSearchParams(dailyNoteParams)
+        this.limitPhotosToNoteDate = true
       }
-
-      // Create the checkbox to switch between today / all photos
-      new Setting(contentEl)
-        .setName('Limit photos to ' + this.noteDate.format('dddd, MMMM D'))
-        .setClass('google-photos-fit-content')
-        .addToggle(toggle => {
-          toggle
-            .setValue(this.plugin.settings.defaultToDailyPhotos)
-            .onChange(checked => {
-              if (checked) {
-                this.gridView.setSearchParams(dailyNoteParams)
-              } else {
-                this.gridView.clearSearchParams()
-              }
-              this.limitPhotosToNoteDate = checked
-              this.gridView.resetGrid()
-              this.gridView.getThumbnails()
-            })
-        })
+    } else {
+      // Set to today's date if there is not note date
+      this.noteDate = moment()
     }
+
+    // Create the date picker
+    const datePicker = new Litepicker({
+      element: document.createElement('div'),
+      startDate: this.noteDate.format('YYYY-MM-DD')
+    })
+    datePicker.on('selected', date => {
+      this.noteDate = moment(date.format('YYYY-MM-DD'))
+      this.dateToggle.setValue(true)
+    })
+
+    // Create the checkbox to switch between date / all photos
+    new Setting(contentEl)
+      .setClass('google-photos-fit-content')
+      .addToggle(toggle => {
+        this.dateToggle = toggle
+        toggle
+          .setValue(this.limitPhotosToNoteDate)
+          .onChange(checked => {
+            this.limitPhotosToNoteDate = checked
+            this.updateView()
+          })
+      })
+      .then(setting => {
+        this.dateSetting = setting
+        this.updateDateText()
+        setting.nameEl.onclick = () => {datePicker.show(setting.nameEl)}
+      })
 
     // Attach the grid view to the modal
     contentEl.appendChild(this.gridView.containerEl)
 
     // Start fetching thumbnails!
-    await this.gridView.getThumbnails()
+    await this.updateView()
   }
 }
 
