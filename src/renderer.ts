@@ -155,7 +155,14 @@ export class GridView extends Renderer {
           })
         }
         this.moreResults = !!nextPageToken
-        this.spinner.style.display = this.moreResults ? 'block' : 'none'
+        if (this.moreResults) {
+          this.spinner.style.display = 'block'
+        } else {
+          // Remove the loading spinner after a short timeout, to give thumbnails a chance to load
+          setTimeout(() => {
+            this.spinner.style.display = 'none'
+          }, targetEl.childElementCount ? 1000 : 0)
+        }
         this.nextPageToken = nextPageToken
       } catch (e) {
         // Unable to fetch results from Photos API

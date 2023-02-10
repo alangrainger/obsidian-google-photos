@@ -3,6 +3,7 @@ export interface HandlebarTemplate {
   google_photo_url?: string;
   google_photo_id?: string;
   google_base_url?: string;
+  taken_date?: string
 }
 
 export function handlebarParse (content: string, template: HandlebarTemplate) {
