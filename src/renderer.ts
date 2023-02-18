@@ -1,5 +1,14 @@
 import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
+import { Moment } from 'moment'
+
+export class ThumbnailImage extends Image {
+  photoId: string
+  baseUrl: string
+  productUrl: string
+  filename: string
+  creationTime: Moment
+}
 
 export default class Renderer {
   plugin: GooglePhotos
@@ -43,13 +52,15 @@ export default class Renderer {
   appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
     (thumbnails || []).forEach(({id, productUrl, baseUrl, mediaMetadata}) => {
       // Image element
-      const img = new Image()
+      const img = new ThumbnailImage()
+      const settings = this.plugin.settings
       img.src = baseUrl + `=w500-h130`
-      img.dataset.photoid = id
-      img.dataset.baseurl = baseUrl
-      img.dataset.producturl = productUrl
+      img.photoId = id
+      img.baseUrl = baseUrl
+      img.productUrl = productUrl
       const {creationTime} = mediaMetadata
-      img.dataset.filename = moment(creationTime).format(this.plugin.settings.filename)
+      img.creationTime = moment(creationTime)
+      img.filename = img.creationTime.format(settings.filename)
       img.onclick = onclick
       img.classList.add('google-photos-grid-thumbnail')
       // Output to Obsidian

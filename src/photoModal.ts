@@ -1,9 +1,8 @@
 import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting, ToggleComponent } from 'obsidian'
-import { GridView } from './renderer'
+import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
 import Litepicker from 'litepicker'
-import { Moment } from 'moment'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -22,26 +21,26 @@ export class PhotosModal extends Modal {
    * Save a local thumbnail and insert the thumbnail plus a link back to the original Google Photos location
    * @param event
    */
-  async insertImageIntoEditor (event: { target: HTMLImageElement }) {
+  async insertImageIntoEditor (event: { target: ThumbnailImage }) {
     try {
       // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
       await this.gridView.resetGrid()
-      let {photoid, baseurl, producturl, filename = ''} = event.target.dataset
-      const src = baseurl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
+      const thumbnailImage = event.target
+      const src = thumbnailImage.baseUrl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
       const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
       // Use the note folder or the user-specified folder from Settings
       let thumbnailFolder = noteFolder
-      let linkPath = filename
+      let linkPath = thumbnailImage.filename
       switch (this.plugin.settings.locationOption) {
         case 'specified':
           thumbnailFolder = this.plugin.settings.locationFolder
           // Set the Markdown image path to be the full specified path + filename
-          linkPath = thumbnailFolder + '/' + filename
+          linkPath = thumbnailFolder + '/' + thumbnailImage.filename
           break
         case 'subfolder':
           thumbnailFolder = noteFolder + '/' + this.plugin.settings.locationSubfolder
           // Set the Markdown image path to be the subfolder + filename
-          linkPath = this.plugin.settings.locationSubfolder + '/' + filename
+          linkPath = this.plugin.settings.locationSubfolder + '/' + thumbnailImage.filename
           break
       }
       thumbnailFolder = thumbnailFolder.replace(/^\/+/, '').replace(/\/+$/, '') // remove any leading/trailing slashes
@@ -54,13 +53,14 @@ export class PhotosModal extends Modal {
       }
       // Fetch the thumbnail from Google Photos
       const imageData = await requestUrl({url: src})
-      await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + filename, imageData.arrayBuffer)
+      await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + thumbnailImage.filename, imageData.arrayBuffer)
       const cursorPosition = this.editor.getCursor()
       const linkText = handlebarParse(this.plugin.settings.thumbnailMarkdown, {
         local_thumbnail_link: linkPath,
-        google_photo_id: photoid,
-        google_photo_url: producturl,
-        google_base_url: baseurl
+        google_photo_id: thumbnailImage.photoId,
+        google_photo_url: thumbnailImage.productUrl,
+        google_base_url: thumbnailImage.baseUrl,
+        taken_date: thumbnailImage.creationTime.format()
       })
       this.editor.replaceRange(linkText, cursorPosition)
       // Move the cursor to the end of the thumbnail link after pasting
@@ -84,10 +84,6 @@ export class DailyPhotosModal extends PhotosModal {
 
   constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
     super(app, plugin, editor, view)
-  }
-
-  dateFilter (date: Moment) {
-    return
   }
 
   /**
@@ -130,7 +126,7 @@ export class DailyPhotosModal extends PhotosModal {
     this.gridView = new GridView({
       scrollEl: modalEl,
       plugin: this.plugin,
-      onThumbnailClick: (event: { target: HTMLImageElement }) => this.insertImageIntoEditor(event)
+      onThumbnailClick: (event: { target: ThumbnailImage }) => this.insertImageIntoEditor(event)
     })
 
     // Check for a valid date from the note title
@@ -182,7 +178,7 @@ export class DailyPhotosModal extends PhotosModal {
   }
 }
 
-export class ShowAlbumsModal extends PhotosModal {
+/* export class ShowAlbumsModal extends PhotosModal {
 
   constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
     super(app, plugin, editor, view)
@@ -197,4 +193,4 @@ export class ShowAlbumsModal extends PhotosModal {
 
     console.log(await this.plugin.photosApi.listAlbums())
   }
-}
+} */
