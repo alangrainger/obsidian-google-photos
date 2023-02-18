@@ -233,6 +233,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         const ul = setting.descEl.createEl('ul')
         ul.createEl('li').setText('local_thumbnail_link - The path to the locally saved thumbnail image')
         ul.createEl('li').setText('google_photo_url - The URL to the original Google Photo')
+        ul.createEl('li').setText('taken_date - The date the photo was taken')
         ul.createEl('li').setText('google_base_url - Advanced variable, see Photos API docs')
         ul.createEl('li').setText('google_photo_id - Advanced variable, see Photos API docs')
       })
