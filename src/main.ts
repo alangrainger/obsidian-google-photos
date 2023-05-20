@@ -4,6 +4,7 @@ import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS } from './settings'
 import { DailyPhotosModal } from './photoModal'
+import { codeblockProcessor } from './codeblock'
 
 export default class GooglePhotos extends Plugin {
   settings: GooglePhotosSettings
@@ -18,17 +19,7 @@ export default class GooglePhotos extends Plugin {
 
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
 
-    this.registerMarkdownCodeBlockProcessor('photos', (source, el) => {
-      const grid = new GridView({plugin: this})
-      el.appendChild(grid.containerEl)
-      grid.containerEl.addClass('google-photos-codeblock')
-      try {
-        if (source.trim()) grid.setSearchParams(JSON.parse(source))
-      } catch (e) {
-        // unable to parse source block
-      }
-      grid.getThumbnails()
-    })
+    this.registerMarkdownCodeBlockProcessor('photos', codeblockProcessor)
 
     this.addCommand({
       id: 'insert-google-photo',
