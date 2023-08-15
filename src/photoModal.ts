@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, moment, Platform, requestUrl, Setting, ToggleComponent } from 'obsidian'
+import { App, Editor, MarkdownView, Modal, moment, Notice, Platform, requestUrl, Setting, ToggleComponent } from 'obsidian'
 import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
@@ -145,19 +145,21 @@ export class DailyPhotosModal extends PhotosModal {
     // Check for a valid date from the note title
     this.noteDate = await this.getDateUsingSetting()
     if (this.noteDate.isValid()) {
-      // Determine the date range to show photos in
-      if (this.plugin.settings.showPhotosInDateRange) {
-        this.xDaysBeforeDate = moment(this.noteDate).subtract(this.plugin.settings.showPhotosXDaysPast, 'days')
-        this.xDaysAfterDate = moment(this.noteDate).add(this.plugin.settings.showPhotosXDaysFuture, 'days')
-      }
       // The currently open note has a parsable date
       if (this.plugin.settings.defaultToDailyPhotos) {
         // Set the default view to show photos from today
         this.limitPhotosToNoteDate = true
       }
     } else {
+      new Notice(`Unable to parse date from ${lowerCaseFirstLetter(this.plugin.settings.getDateFrom)} with format ${this.plugin.settings.getDateFromFormat}. Using today's date instead.`)
       // Set to today's date if there is not note date
       this.noteDate = moment()
+    }
+
+    // Determine the date range to show photos in
+    if (this.plugin.settings.showPhotosInDateRange) {
+      this.xDaysBeforeDate = moment(this.noteDate).subtract(this.plugin.settings.showPhotosXDaysPast, 'days')
+      this.xDaysAfterDate = moment(this.noteDate).add(this.plugin.settings.showPhotosXDaysFuture, 'days')
     }
 
     // Create the date picker
@@ -234,4 +236,8 @@ function dateToGoogleDateFilter(date: moment.Moment) {
     month: +date.format('M'),
     day: +date.format('D')
   }
+}
+
+function lowerCaseFirstLetter(string: string) {
+  return string.charAt(0).toLowerCase() + string.slice(1)
 }
