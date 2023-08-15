@@ -206,7 +206,8 @@ export class DailyPhotosModal extends PhotosModal {
       const frontMatter = file?.frontmatter
       if (frontMatter && frontMatter[this.plugin.settings.getDateFromFrontMatterKey]) {
         return moment(frontMatter[this.plugin.settings.getDateFromFrontMatterKey], this.plugin.settings.getDateFromFormat, true)
-      }
+      } 
+      return moment('invalid date')
     }
     // GetDateFromOptions.TODAY option, use today's date
     return moment()
