@@ -3,6 +3,8 @@ import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
 import Litepicker from 'litepicker'
+import { GetDateFromOptions } from 'settings'
+import { GooglePhotosDateFilter } from 'photosApi'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -78,7 +80,9 @@ export class PhotosModal extends Modal {
 
 export class DailyPhotosModal extends PhotosModal {
   noteDate: moment.Moment
-  limitPhotosToNoteDate: boolean = false
+  xDaysBeforeDate: moment.Moment
+  xDaysAfterDate: moment.Moment
+  limitPhotosToNoteDate = false
   dateSetting: Setting
   dateToggle: ToggleComponent
 
@@ -90,7 +94,11 @@ export class DailyPhotosModal extends PhotosModal {
    * Update the human-readable date toggle text
    */
   updateDateText () {
-    this.dateSetting?.setName('Limit photos to ' + this.noteDate.format('dddd, MMMM D') + ' 📅')
+    if (this.plugin.settings.showPhotosInDateRange) {
+      this.dateSetting?.setName(`Limit photos between ${this.xDaysBeforeDate.format('dddd, MMMM D')} and ${this.xDaysAfterDate.format('dddd, MMMM, D')} 📅`)
+    } else {
+      this.dateSetting?.setName('Limit photos to ' + this.noteDate.format('dddd, MMMM D') + ' 📅')
+    }
   }
 
   /**
@@ -98,16 +106,21 @@ export class DailyPhotosModal extends PhotosModal {
    */
   async updateView () {
     if (this.limitPhotosToNoteDate) {
+      let dateFilter: GooglePhotosDateFilter = {
+        dates: [dateToGoogleDateFilter(this.noteDate)],
+      }
+      if (this.plugin.settings.showPhotosInDateRange) {
+        dateFilter = {
+          ranges: [{
+            startDate: dateToGoogleDateFilter(this.xDaysBeforeDate),
+            endDate: dateToGoogleDateFilter(this.xDaysAfterDate)
+          }],
+        } as object
+      }
       this.updateDateText()
       this.gridView.setSearchParams({
         filters: {
-          dateFilter: {
-            dates: [{
-              year: +this.noteDate.format('YYYY'),
-              month: +this.noteDate.format('M'),
-              day: +this.noteDate.format('D')
-            }]
-          }
+          dateFilter
         }
       })
     } else {
@@ -130,8 +143,13 @@ export class DailyPhotosModal extends PhotosModal {
     })
 
     // Check for a valid date from the note title
-    this.noteDate = moment(this.view.file.basename, this.plugin.settings.parseNoteTitle, true)
+    this.noteDate = await this.getDateUsingSetting()
     if (this.noteDate.isValid()) {
+      // Determine the date range to show photos in
+      if (this.plugin.settings.showPhotosInDateRange) {
+        this.xDaysBeforeDate = moment(this.noteDate).subtract(this.plugin.settings.showPhotosXDaysPast, 'days')
+        this.xDaysAfterDate = moment(this.noteDate).add(this.plugin.settings.showPhotosXDaysFuture, 'days')
+      }
       // The currently open note has a parsable date
       if (this.plugin.settings.defaultToDailyPhotos) {
         // Set the default view to show photos from today
@@ -176,6 +194,21 @@ export class DailyPhotosModal extends PhotosModal {
     // Start fetching thumbnails!
     await this.updateView()
   }
+
+  // Gets the date from the note title, front matter, or returns today based on user setting
+  async getDateUsingSetting(): Promise<moment.Moment> {
+    if (this.plugin.settings.getDateFrom === GetDateFromOptions.NOTE_TITLE) {
+      return moment(this.view.file.basename, this.plugin.settings.getDateFromFormat, true)
+    } else if (this.plugin.settings.getDateFrom === GetDateFromOptions.FRONT_MATTER) {
+      const file = this.app.metadataCache.getFileCache(this.view.file)
+      const frontMatter = file?.frontmatter
+      if (frontMatter && frontMatter[this.plugin.settings.getDateFromFrontMatterKey]) {
+        return moment(frontMatter[this.plugin.settings.getDateFromFrontMatterKey], this.plugin.settings.getDateFromFormat, true)
+      }
+    }
+    // GetDateFromOptions.TODAY option, use today's date
+    return moment()
+  }
 }
 
 /* export class ShowAlbumsModal extends PhotosModal {
@@ -194,3 +227,11 @@ export class DailyPhotosModal extends PhotosModal {
     console.log(await this.plugin.photosApi.listAlbums())
   }
 } */
+
+function dateToGoogleDateFilter(date: moment.Moment) {
+  return {
+    year: +date.format('YYYY'),
+    month: +date.format('M'),
+    day: +date.format('D')
+  }
+}
