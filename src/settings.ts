@@ -2,6 +2,12 @@ import { App, moment, PluginSettingTab, Setting } from 'obsidian'
 import { FolderSuggest } from './suggesters/FolderSuggester'
 import GooglePhotos from './main'
 
+export enum GetDateFromOptions {
+  NOTE_TITLE = 'Note\'s title',
+  FRONT_MATTER = 'Note\'s front matter',
+  USE_TODAY = 'Use today\'s date',
+}
+
 export interface GooglePhotosSettings {
   clientId: string;
   clientSecret: string;
@@ -12,11 +18,18 @@ export interface GooglePhotosSettings {
   thumbnailHeight: number;
   filename: string;
   thumbnailMarkdown: string;
-  parseNoteTitle: string;
   defaultToDailyPhotos: boolean;
   locationOption: string;
   locationFolder: string;
   locationSubfolder: string;
+
+  getDateFrom: GetDateFromOptions;
+  getDateFromFrontMatterKey: string;
+  getDateFromFormat: string;
+
+  showPhotosInDateRange: boolean;
+  showPhotosXDaysPast: number;
+  showPhotosXDaysFuture: number;
 }
 
 export const DEFAULT_SETTINGS: GooglePhotosSettings = {
@@ -29,11 +42,18 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   thumbnailHeight: 280,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
   thumbnailMarkdown: '[![]({{local_thumbnail_link}})]({{google_photo_url}}) ',
-  parseNoteTitle: 'YYYY-MM-DD',
   defaultToDailyPhotos: true,
   locationOption: 'note',
   locationFolder: '',
-  locationSubfolder: 'photos'
+  locationSubfolder: 'photos',
+
+  getDateFrom: GetDateFromOptions.NOTE_TITLE,
+  getDateFromFrontMatterKey: 'date',
+  getDateFromFormat: 'YYYY-MM-DD',
+
+  showPhotosInDateRange: false,
+  showPhotosXDaysPast: 7,
+  showPhotosXDaysFuture: 1,
 }
 
 export class GooglePhotosSettingTab extends PluginSettingTab {
@@ -243,35 +263,178 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
      */
 
     new Setting(containerEl)
-      .setName('Other  settings')
+      .setName('Date settings')
       .setHeading()
     new Setting(containerEl)
-      .setName('Default to showing photos from note date')
-      .setDesc('If the plugin detects you are on a daily note, it can default to show you photos from that date.')
+      .setName('Default to limiting shown photos to date(s)')
+      .setDesc('Choose to limit the photos shown in popup modal to a specific date(s) determined by the option below.')
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.defaultToDailyPhotos)
           .onChange(async (value) => {
             this.plugin.settings.defaultToDailyPhotos = value
             await this.plugin.saveSettings()
+            this.display()
           })
       })
-    new Setting(containerEl)
-      .setName('Daily note date format')
-      .addText(text => text
-        .setPlaceholder(DEFAULT_SETTINGS.parseNoteTitle)
-        .setValue(this.plugin.settings.parseNoteTitle)
-        .onChange(async (value) => {
-          this.plugin.settings.parseNoteTitle = value.trim()
-          await this.plugin.saveSettings()
-        }))
-      .then(setting => {
-        setting.descEl.appendText('This is the ')
-        setting.descEl.createEl('a', {
-          text: 'MomentJS date format',
-          href: 'https://momentjs.com/docs/#/displaying/format/',
+
+    // Provide three options in a dropdown for how to parse the date to use for the photo search
+    if (this.plugin.settings.defaultToDailyPhotos) {
+      new Setting(containerEl)
+        .setName('Determine date from')
+        .addDropdown(dropdown =>
+          dropdown
+            .addOption(
+              GetDateFromOptions.NOTE_TITLE,
+              GetDateFromOptions.NOTE_TITLE
+            )
+            .addOption(
+              GetDateFromOptions.FRONT_MATTER,
+              GetDateFromOptions.FRONT_MATTER
+            )
+            .addOption(GetDateFromOptions.USE_TODAY, GetDateFromOptions.USE_TODAY)
+            .setValue(this.plugin.settings.getDateFrom)
+            .onChange(async (value: GetDateFromOptions) => {
+              this.plugin.settings.getDateFrom = value
+              await this.plugin.saveSettings()
+              this.display()
+            })
+        )
+        .then(setting => {
+          setting.descEl.appendText(
+            'The source of determining the date used to search for photos.'
+          )
+          setting.descEl.createEl('br')
+          const ul = setting.descEl.createEl('ul')
+          ul.createEl('li').setText(
+            `${GetDateFromOptions.NOTE_TITLE} - The date will be parsed from the note's title, using the format below.`
+          )
+          ul.createEl('li').setText(
+            `${GetDateFromOptions.FRONT_MATTER} - The date will be parsed from the note's front matter, using the property and format below.`
+          )
+          ul.createEl('li').setText(
+            `${GetDateFromOptions.USE_TODAY} - Today's date will be used.`
+          )
         })
-        setting.descEl.appendText(' used in the title of your daily notes, so we can parse them back to a date.')
+
+      if (this.plugin.settings.getDateFrom === GetDateFromOptions.NOTE_TITLE) {
+        new Setting(containerEl)
+          .setName('Title date format')
+          .addText(text =>
+            text
+              .setPlaceholder(DEFAULT_SETTINGS.getDateFromFormat)
+              .setValue(this.plugin.settings.getDateFromFormat)
+              .onChange(async value => {
+                this.plugin.settings.getDateFromFormat = value.trim()
+                await this.plugin.saveSettings()
+              })
+          )
+          .then(setting => {
+            setting.descEl.appendText('This is the ')
+            setting.descEl.createEl('a', {
+              text: 'MomentJS date format',
+              href: 'https://momentjs.com/docs/#/displaying/format/',
+            })
+            setting.descEl.appendText(
+              ' used in the title of your daily notes, so we can parse them back to a date.'
+            )
+          })
+      } else if (
+        this.plugin.settings.getDateFrom === GetDateFromOptions.FRONT_MATTER
+      ) {
+        new Setting(containerEl)
+          .setName('Front matter key')
+          .addText(text =>
+            text
+              .setPlaceholder(DEFAULT_SETTINGS.getDateFromFrontMatterKey)
+              .setValue(this.plugin.settings.getDateFromFrontMatterKey)
+              .onChange(async value => {
+                this.plugin.settings.getDateFromFrontMatterKey = value.trim()
+                await this.plugin.saveSettings()
+              })
+          )
+          .then(setting => {
+            setting.descEl.appendText(
+              'This is the name of the front matter property that contains the date.'
+            )
+          })
+        new Setting(containerEl)
+          .setName('Front matter date format')
+          .addText(text =>
+            text
+              .setPlaceholder(DEFAULT_SETTINGS.getDateFromFormat)
+              .setValue(this.plugin.settings.getDateFromFormat)
+              .onChange(async value => {
+                this.plugin.settings.getDateFromFormat = value.trim()
+                await this.plugin.saveSettings()
+              })
+          )
+          .then(setting => {
+            setting.descEl.appendText('This is the ')
+            setting.descEl.createEl('a', {
+              text: 'MomentJS date format',
+              href: 'https://momentjs.com/docs/#/displaying/format/',
+            })
+            setting.descEl.appendText(
+              ' used in the front matter property, so we can parse it back to a date.'
+            )
+          })
+      }  
+
+      new Setting(containerEl)
+        .setName('Show photos in range of days?')
+        .setDesc(`Enable to show photos ${this.plugin.settings.showPhotosXDaysPast} days before date and ${this.plugin.settings.showPhotosXDaysFuture} days after the date.`)
+        .addToggle(toggle => {
+          toggle
+            .setValue(this.plugin.settings.showPhotosInDateRange)
+            .onChange(async (value) => {
+              this.plugin.settings.showPhotosInDateRange = value
+              await this.plugin.saveSettings()
+              this.display()
+            })
+        })
+    }
+
+    if (this.plugin.settings.showPhotosInDateRange) {
+      new Setting(containerEl)
+        .setName('Number of days in the past')
+        .setDesc('Number of days in the past to show photos from.')
+        .addText(text => {
+          text
+          .setPlaceholder(DEFAULT_SETTINGS.showPhotosXDaysPast.toString())
+          .setValue(this.plugin.settings.showPhotosXDaysPast.toString())
+          .onChange(async (value) => {
+            if (isNaN(+value)) {
+              return
+            }
+            this.plugin.settings.showPhotosXDaysPast = +value
+            await this.plugin.saveSettings()
+          })
+          // Update display for above setting to update its description or to update validated value
+          text.inputEl.onblur = () => {
+            this.display()
+          }
       })
+      
+      new Setting(containerEl)
+        .setName('Number of days in the future')
+        .setDesc('Number of days in the future to show photos from.')
+        .addText(text => { 
+          text
+          .setPlaceholder(DEFAULT_SETTINGS.showPhotosXDaysFuture.toString())
+          .setValue(this.plugin.settings.showPhotosXDaysFuture.toString())
+          .onChange(async (value) => {
+            if (isNaN(+value)) {
+              return
+            }
+            this.plugin.settings.showPhotosXDaysFuture = +value
+            await this.plugin.saveSettings()
+          })
+          // Update display for above setting to update its description or to update validated value
+          text.inputEl.onblur = () => {
+            this.display()
+          }
+        })
+    }
   }
 }
