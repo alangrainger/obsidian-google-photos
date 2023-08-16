@@ -17,8 +17,10 @@ export type GooglePhotosDateFilter = {
 }
 
 export type GooglePhotosSearchParams = {
+  method?: string,
+  body?: any,
   filters?: {
-    dateFilter?: GooglePhotosDateFilter 
+    dateFilter?: GooglePhotosDateFilter
   }
 }
 
