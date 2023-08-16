@@ -23,6 +23,6 @@
       "quotes": ["error", "single"],
       // Don't require semi colons
       "semi": ["error", "never"],
-      "arrow-parens": ["error", "as-needed"], 
+      "arrow-parens": ["error", "as-needed"]
     } 
   }
