@@ -377,20 +377,20 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
             ' used in the front matter property, so we can parse it back to a date.'
           )
         })
-
-      new Setting(containerEl)
-        .setName('Show photos in range of days?')
-        .setDesc(`Enable to show photos from a range of days before and after the note date.`)
-        .addToggle(toggle => {
-          toggle
-            .setValue(this.plugin.settings.showPhotosInDateRange)
-            .onChange(async (value) => {
-              this.plugin.settings.showPhotosInDateRange = value
-              await this.plugin.saveSettings()
-              this.display()
-            })
-        })
     }
+
+    new Setting(containerEl)
+      .setName('Show photos in range of days?')
+      .setDesc(`Enable to show photos from a range of days before and after the note date.`)
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.showPhotosInDateRange)
+          .onChange(async (value) => {
+            this.plugin.settings.showPhotosInDateRange = value
+            await this.plugin.saveSettings()
+            this.display()
+          })
+      })
 
     if (this.plugin.settings.showPhotosInDateRange) {
       new Setting(containerEl)
