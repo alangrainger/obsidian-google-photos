@@ -78,6 +78,27 @@ For example, if you wanted to show photos of food taken on every April 1st, you 
 ```
 ````
 
+## Today's photos embedded into your daily note
+
+If you wanted to automatically add today's photos into your daily note, you could do that with Templater like this:
+
+````
+## Photos from today
+```photos
+{
+  "filters": {
+    "dateFilter": {
+      "dates": [{
+        "year": <% tp.date.now('YYYY') %>,
+        "month": <% tp.date.now('M') %>,
+        "day": <% tp.date.now('D') %>
+      }]
+    }
+  }
+}
+```
+````
+
 # Adjusting the visual style
 
 If you want to adjust the styles, these are the classes used:
