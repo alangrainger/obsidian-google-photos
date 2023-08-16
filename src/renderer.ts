@@ -1,6 +1,7 @@
 import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
 import { Moment } from 'moment'
+import { GooglePhotosSearchParams } from 'photosApi'
 
 export class ThumbnailImage extends Image {
   photoId: string
@@ -73,7 +74,7 @@ export class GridView extends Renderer {
   scrollEl: HTMLElement
   containerEl: HTMLElement
   gridEl: HTMLElement
-  searchParams: object = {}
+  searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
   onThumbnailClick: Function = () => {}
   nextPageToken: string
@@ -119,7 +120,7 @@ export class GridView extends Renderer {
     this.moreResults = true
   }
 
-  setSearchParams (searchParams: object) {
+  setSearchParams (searchParams: GooglePhotosSearchParams) {
     this.searchParams = searchParams
   }
 
