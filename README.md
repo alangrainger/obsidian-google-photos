@@ -37,6 +37,8 @@ You can use codeblocks to insert galleries of photos:
 
 ### Photos from the periodic note date
 
+This is especially useful to put in your daily note template. It will show the photos just from that daily note date.
+
 ````
 ```photos
 notedate
@@ -44,6 +46,8 @@ notedate
 ````
 
 ### Photos from today
+
+This will show photos from today - the current live date.
 
 ````
 ```photos
