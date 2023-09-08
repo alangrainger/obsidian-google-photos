@@ -24,6 +24,17 @@ export type GooglePhotosSearchParams = {
   }
 }
 
+export type GooglePhotosAlbum = {
+  "id": string,
+  "title": string,
+  "productUrl": string,
+  "isWriteable": boolean,
+  "shareInfo": object,
+  "mediaItemsCount": string,
+  "coverPhotoBaseUrl": string,
+  "coverPhotoMediaItemId": string
+}
+
 export default class PhotosApi {
   plugin: GooglePhotos
 
@@ -87,6 +98,7 @@ export default class PhotosApi {
       body: JSON.stringify(options)
     })
   }
+
   async listAlbums () {
     return this.request('/v1/albums', {
       method: 'GET'

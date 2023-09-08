@@ -1,9 +1,10 @@
 import { MarkdownView, Plugin, Editor } from 'obsidian'
-import { GridView } from './renderer'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS } from './settings'
 import { DailyPhotosModal } from './photoModal'
+import { AlbumSuggest } from './suggesters/AlbumSuggest'
+import { codeblockProcessor } from './codeblock'
 
 export default class GooglePhotos extends Plugin {
   settings: GooglePhotosSettings
@@ -19,15 +20,7 @@ export default class GooglePhotos extends Plugin {
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
 
     this.registerMarkdownCodeBlockProcessor('photos', (source, el) => {
-      const grid = new GridView({plugin: this})
-      el.appendChild(grid.containerEl)
-      grid.containerEl.addClass('google-photos-codeblock')
-      try {
-        if (source.trim()) grid.setSearchParams(JSON.parse(source))
-      } catch (e) {
-        // unable to parse source block
-      }
-      grid.getThumbnails()
+      codeblockProcessor(this, source, el)
     })
 
     this.addCommand({
@@ -37,6 +30,26 @@ export default class GooglePhotos extends Plugin {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
           new DailyPhotosModal(this.app, this, editor, view).open()
+        }
+      }
+    })
+
+    this.addCommand({
+      id: 'insert-album',
+      name: 'Insert album',
+      editorCallback: async (editor: Editor) => {
+        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
+        if (markdownView) {
+          new AlbumSuggest(this).show((album) => {
+            const searchJson = JSON.stringify({
+              title: album.title,
+              query: {
+                albumId: album.id
+              }
+            })
+            const codeblock = '\n```photos\n' + searchJson + '\n```\n'
+            editor.replaceRange(codeblock, editor.getCursor())
+          })
         }
       }
     })
