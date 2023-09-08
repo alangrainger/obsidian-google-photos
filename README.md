@@ -31,6 +31,11 @@ If you're using Obsidian Sync, you'll need to make sure the **Installed communit
 
 If you want to style or hide the title, the CSS class is `.google-photos-album-title`
 
+Points of note:
+
+- It shows only your most recently used albums. This should be enough to get started, and I hope to update it in the future so it can fetch more of that list.
+- Clicking on the photos doesn’t do anything. I’d be interested to hear feedback on what it _should_ do, in an ideal world. Please [join the conversation here](https://github.com/alangrainger/obsidian-google-photos/issues/5).
+
 ## Codeblocks
 
 You can use codeblocks to insert galleries of photos:
