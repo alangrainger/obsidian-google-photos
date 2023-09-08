@@ -4,7 +4,7 @@ import PhotosApi, { GooglePhotosAlbum } from '../photosApi'
 
 type Callback = (albumData: GooglePhotosAlbum) => void
 
-export class AlbumSuggest extends SuggestModal<any> {
+export default class AlbumSuggest extends SuggestModal<any> {
   plugin: GooglePhotos
   callback: Callback
 

@@ -14,8 +14,7 @@ import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
 import Litepicker from 'litepicker'
-import { GetDateFromOptions } from 'settings'
-import { GooglePhotosDateFilter } from 'photosApi'
+import { dateToGoogleDateFilter, GooglePhotosDateFilter } from 'photosApi'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -158,7 +157,7 @@ export class DailyPhotosModal extends PhotosModal {
     })
 
     // Check for a valid date from the note title
-    this.noteDate = await this.getDateUsingSetting()
+    this.noteDate = this.plugin.getNoteDate(this.view.file)
     if (this.noteDate.isValid()) {
       // The currently open note has a parsable date
       if (this.plugin.settings.defaultToDailyPhotos) {
@@ -167,7 +166,7 @@ export class DailyPhotosModal extends PhotosModal {
       }
     } else {
       new Notice(`Unable to parse date from ${lowerCaseFirstLetter(this.plugin.settings.getDateFrom)} with format ${this.plugin.settings.getDateFromFormat}. Using today's date instead.`)
-      // Set to today's date if there is not note date
+      // Set to today's date if there is no note date
       this.noteDate = moment()
     }
 
@@ -204,47 +203,6 @@ export class DailyPhotosModal extends PhotosModal {
 
     // Start fetching thumbnails!
     await this.updateView()
-  }
-
-  // Gets the date from the note title, front matter, or returns today based on user setting
-  async getDateUsingSetting (): Promise<moment.Moment> {
-    if (this.plugin.settings.getDateFrom === GetDateFromOptions.NOTE_TITLE) {
-      return moment(this.view.file.basename, this.plugin.settings.getDateFromFormat, true)
-    } else if (this.plugin.settings.getDateFrom === GetDateFromOptions.FRONT_MATTER) {
-      const file = this.app.metadataCache.getFileCache(this.view.file)
-      const frontMatter = file?.frontmatter
-      if (frontMatter && frontMatter[this.plugin.settings.getDateFromFrontMatterKey]) {
-        return moment(frontMatter[this.plugin.settings.getDateFromFrontMatterKey], this.plugin.settings.getDateFromFormat, true)
-      }
-      return moment('invalid date')
-    }
-    // GetDateFromOptions.TODAY option, use today's date
-    return moment()
-  }
-}
-
-/* export class ShowAlbumsModal extends PhotosModal {
-
-  constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
-    super(app, plugin, editor, view)
-  }
-
-  async onOpen () {
-    const {contentEl, modalEl} = this
-    if (Platform.isDesktop) {
-      // Resize to fit the viewport width on desktop
-      modalEl.addClass('google-photos-modal-grid')
-    }
-
-    console.log(await this.plugin.photosApi.listAlbums())
-  }
-} */
-
-function dateToGoogleDateFilter (date: moment.Moment) {
-  return {
-    year: +date.format('YYYY'),
-    month: +date.format('M'),
-    day: +date.format('D')
   }
 }
 

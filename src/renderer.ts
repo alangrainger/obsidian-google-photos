@@ -142,7 +142,7 @@ export class GridView extends Renderer {
   /**
    * Load more thumbnails if both of these checks are true:
    * 1. There are more results to return from Google Photos API
-   * 2. The scrolled height is within 8 thumbnail's height from the bottom
+   * 2. The scrolled height is within 8 thumbnails height from the bottom
    *
    * @returns {Promise<void>}
    */
@@ -156,7 +156,7 @@ export class GridView extends Renderer {
     /*
     While:
      + the active flag is enabled, and there are more results to fetch from Photos API, and there is a scrollable element
-     + the user is within 5 thumbnail's distance from the bottom of the scrollable element
+     + the user is within 5 thumbnails distance from the bottom of the scrollable element
      + the scrollable element is visible in the viewport OR we have not yet loaded any thumbnails
      */
     while (
@@ -170,7 +170,6 @@ export class GridView extends Renderer {
         if (this.nextPageToken) Object.assign(localOptions, { pageToken: this.nextPageToken })
         const { mediaItems, nextPageToken } = await this.plugin.photosApi.mediaItemsSearch(localOptions)
         if (mediaItems) {
-          // console.log(`appending ${mediaItems.length} items`)
           this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
         } else if (!targetEl.childElementCount) {
           targetEl.createEl('p', {

@@ -105,3 +105,11 @@ export default class PhotosApi {
     })
   }
 }
+
+export function dateToGoogleDateFilter (date: moment.Moment) {
+  return {
+    year: +date.format('YYYY') || 0,
+    month: +date.format('M') || 0,
+    day: +date.format('D') || 0
+  }
+}
