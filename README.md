@@ -37,7 +37,7 @@ You can use codeblocks to insert galleries of photos:
 
 ### Photos from the periodic note date
 
-This is especially useful to put in your daily note template. It will show the photos just from that daily note date.
+This is especially useful to put in your daily note template, and it will show the photos just from that daily note date. You can configure the settings to fetch the date from the note title or a frontmatter property.
 
 ````
 ```photos
