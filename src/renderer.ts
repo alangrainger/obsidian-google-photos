@@ -1,5 +1,15 @@
 import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
+import { Moment } from 'moment'
+import { GooglePhotosSearchParams } from 'photosApi'
+
+export class ThumbnailImage extends Image {
+  photoId: string
+  baseUrl: string
+  productUrl: string
+  filename: string
+  creationTime: Moment
+}
 
 export default class Renderer {
   plugin: GooglePhotos
@@ -41,14 +51,17 @@ export default class Renderer {
    * @param {function} onclick
    */
   appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
-    (thumbnails || []).forEach(({productUrl, baseUrl, mediaMetadata}) => {
+    (thumbnails || []).forEach(({id, productUrl, baseUrl, mediaMetadata}) => {
       // Image element
-      const img = new Image()
+      const img = new ThumbnailImage()
+      const settings = this.plugin.settings
       img.src = baseUrl + `=w500-h130`
-      img.dataset.baseurl = baseUrl
-      img.dataset.producturl = productUrl
+      img.photoId = id
+      img.baseUrl = baseUrl
+      img.productUrl = productUrl
       const {creationTime} = mediaMetadata
-      img.dataset.filename = moment(creationTime).format(this.plugin.settings.filename)
+      img.creationTime = moment(creationTime)
+      img.filename = img.creationTime.format(settings.filename)
       img.onclick = onclick
       img.classList.add('google-photos-grid-thumbnail')
       // Output to Obsidian
@@ -61,7 +74,7 @@ export class GridView extends Renderer {
   scrollEl: HTMLElement
   containerEl: HTMLElement
   gridEl: HTMLElement
-  searchParams: object = {}
+  searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
   onThumbnailClick: Function = () => {}
   nextPageToken: string
@@ -107,7 +120,7 @@ export class GridView extends Renderer {
     this.moreResults = true
   }
 
-  setSearchParams (searchParams: object) {
+  setSearchParams (searchParams: GooglePhotosSearchParams) {
     this.searchParams = searchParams
   }
 
@@ -154,7 +167,14 @@ export class GridView extends Renderer {
           })
         }
         this.moreResults = !!nextPageToken
-        this.spinner.style.display = this.moreResults ? 'block' : 'none'
+        if (this.moreResults) {
+          this.spinner.style.display = 'block'
+        } else {
+          // Remove the loading spinner after a short timeout, to give thumbnails a chance to load
+          setTimeout(() => {
+            this.spinner.style.display = 'none'
+          }, targetEl.childElementCount ? 1000 : 0)
+        }
         this.nextPageToken = nextPageToken
       } catch (e) {
         // Unable to fetch results from Photos API

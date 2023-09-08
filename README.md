@@ -78,6 +78,27 @@ For example, if you wanted to show photos of food taken on every April 1st, you 
 ```
 ````
 
+## Today's photos embedded into your daily note
+
+If you wanted to automatically add today's photos into your daily note, you could do that with Templater like this:
+
+````
+## Photos from today
+```photos
+{
+  "filters": {
+    "dateFilter": {
+      "dates": [{
+        "year": <% tp.date.now('YYYY') %>,
+        "month": <% tp.date.now('M') %>,
+        "day": <% tp.date.now('D') %>
+      }]
+    }
+  }
+}
+```
+````
+
 # Adjusting the visual style
 
 If you want to adjust the styles, these are the classes used:
@@ -85,6 +106,14 @@ If you want to adjust the styles, these are the classes used:
 `.google-photos-grid-thumbnail` - the thumbnail images
 `.google-photos-codeblock` - the embedded codeblock container
 `.google-photos-modal-grid` - the popup modal grid container
+
+# FAQs
+
+#### Do the images have to be saved locally? Can they be remote thumbnails?
+
+The way that Photos API generates the URLs, the direct image links are only available for a short time and then they expire. So while you could add them to your notes, they would stop working at some point.
+
+I'm testing a few potential options at the moment, but it takes time to wait out the link expiry (or non-expiry, if it works).
 
 ---
 

@@ -1,6 +1,29 @@
 import { moment } from 'obsidian'
 import GooglePhotos from './main'
 
+export type GooglePhotosDate = {
+  year: number;
+  month: number;
+  day: number;
+}
+
+// https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search#DateFilter
+export type GooglePhotosDateFilter = {
+  dates?: Array<GooglePhotosDate>;
+  ranges?: {
+    startDate: GooglePhotosDate;
+    endDate: GooglePhotosDate;
+  }
+}
+
+export type GooglePhotosSearchParams = {
+  method?: string,
+  body?: any,
+  filters?: {
+    dateFilter?: GooglePhotosDateFilter
+  }
+}
+
 export default class PhotosApi {
   plugin: GooglePhotos
 
@@ -17,7 +40,7 @@ export default class PhotosApi {
    *
    * @throws Will throw an error if the input is malformed, or if the user is not authenticated
    */
-  async request (endpoint: string, params = {}) {
+  async request (endpoint: string, params: GooglePhotosSearchParams = {}) {
     // Check to make sure we have a valid access token
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
