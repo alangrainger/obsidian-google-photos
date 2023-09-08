@@ -16,3 +16,15 @@
 .google-photos-fit-content {
     width: fit-content;
 }
+
+.google-photos-album-title {
+    font-variant: var(--h2-variant);
+    line-height: var(--h2-line-height);
+    font-size: var(--h2-size);
+    color: var(--h2-color);
+    font-weight: var(--h2-weight);
+    font-style: var(--h2-style);
+    font-family: var(--h2-font);
+    margin-block-start: var(--p-spacing);
+    margin-block-end: var(--p-spacing);
+}

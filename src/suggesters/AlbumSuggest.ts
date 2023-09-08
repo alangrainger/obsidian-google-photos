@@ -1,0 +1,43 @@
+import { SuggestModal } from 'obsidian'
+import GooglePhotos from '../main'
+import PhotosApi, { GooglePhotosAlbum } from '../photosApi'
+
+type Callback = (albumData: GooglePhotosAlbum) => void
+
+export class AlbumSuggest extends SuggestModal<any> {
+  plugin: GooglePhotos
+  callback: Callback
+
+  constructor (plugin: GooglePhotos) {
+    super(plugin.app)
+    this.plugin = plugin
+    this.setPlaceholder('Please wait, loading list of albums...')
+  }
+
+  show (callback: Callback) {
+    this.callback = callback
+    super.open()
+  }
+
+  async getSuggestions (query: string) {
+    let albums = []
+    try {
+      const photosApi = new PhotosApi(this.plugin)
+      const result = await photosApi.listAlbums()
+      albums = result.albums
+    } catch (e) {
+      console.log(e)
+    }
+    this.setPlaceholder('')
+    return albums
+  }
+
+  renderSuggestion (item: any, el: HTMLElement) {
+    el.setText(item.title)
+  }
+
+  onChooseSuggestion (item: GooglePhotosAlbum, evt: MouseEvent | KeyboardEvent) {
+    // Send the chosen album to the callback function
+    this.callback(item)
+  }
+}

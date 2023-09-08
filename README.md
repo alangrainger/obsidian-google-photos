@@ -60,18 +60,20 @@ For example, if you wanted to show photos of food taken on every April 1st, you 
 ````
 ```photos
 {
-  "filters": {
-    "dateFilter": {
-      "dates": [{
-        "year": 0,
-        "month": 4,
-        "day": 1
-      }]
-    },
-    "contentFilter": {
-      "includedContentCategories": [
-        "FOOD"
-      ]
+  "query": {
+    "filters": {
+      "dateFilter": {
+        "dates": [{
+          "year": 0,
+          "month": 4,
+          "day": 1
+        }]
+      },
+      "contentFilter": {
+        "includedContentCategories": [
+          "FOOD"
+        ]
+      }
     }
   }
 }
@@ -86,13 +88,15 @@ If you wanted to automatically add today's photos into your daily note, you coul
 ## Photos from today
 ```photos
 {
-  "filters": {
-    "dateFilter": {
-      "dates": [{
-        "year": <% tp.date.now('YYYY') %>,
-        "month": <% tp.date.now('M') %>,
-        "day": <% tp.date.now('D') %>
-      }]
+  "query": {
+    "filters": {
+      "dateFilter": {
+        "dates": [{
+          "year": <% tp.date.now('YYYY') %>,
+          "month": <% tp.date.now('M') %>,
+          "day": <% tp.date.now('D') %>
+        }]
+      }
     }
   }
 }

@@ -51,7 +51,7 @@ export default class Renderer {
    * @param {function} onclick
    */
   appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
-    (thumbnails || []).forEach(({id, productUrl, baseUrl, mediaMetadata}) => {
+    (thumbnails || []).forEach(({ id, productUrl, baseUrl, mediaMetadata }) => {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
@@ -59,7 +59,7 @@ export default class Renderer {
       img.photoId = id
       img.baseUrl = baseUrl
       img.productUrl = productUrl
-      const {creationTime} = mediaMetadata
+      const { creationTime } = mediaMetadata
       img.creationTime = moment(creationTime)
       img.filename = img.creationTime.format(settings.filename)
       img.onclick = onclick
@@ -74,6 +74,7 @@ export class GridView extends Renderer {
   scrollEl: HTMLElement
   containerEl: HTMLElement
   gridEl: HTMLElement
+  title: string
   searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
   onThumbnailClick: Function = () => {}
@@ -82,10 +83,11 @@ export class GridView extends Renderer {
   moreResults: boolean = true
   active: boolean = true
 
-  constructor ({scrollEl, plugin, onThumbnailClick}: {
+  constructor ({ scrollEl, plugin, onThumbnailClick, title }: {
     plugin: GooglePhotos,
     scrollEl?: HTMLElement,
-    onThumbnailClick?: Function
+    onThumbnailClick?: Function,
+    title?: string
   }) {
     super(plugin)
     if (onThumbnailClick) {
@@ -95,6 +97,11 @@ export class GridView extends Renderer {
 
     // Add the photo-grid container
     this.containerEl = document.createElement('div')
+    if (title) {
+      const titleEl = this.containerEl.createEl('div')
+      titleEl.className = 'google-photos-album-title'
+      titleEl.innerText = title
+    }
     this.gridEl = this.containerEl.createEl('div')
     // Add the loading spinner
     this.containerEl.appendChild(this.spinner)
@@ -118,6 +125,10 @@ export class GridView extends Renderer {
     this.fetching = false
     this.nextPageToken = ''
     this.moreResults = true
+  }
+
+  setTitle (title: string) {
+    this.title = title
   }
 
   setSearchParams (searchParams: GooglePhotosSearchParams) {
@@ -156,8 +167,8 @@ export class GridView extends Renderer {
       // Perform the search with Photos API and output the result
       try {
         const localOptions = Object.assign({}, this.searchParams)
-        if (this.nextPageToken) Object.assign(localOptions, {pageToken: this.nextPageToken})
-        const {mediaItems, nextPageToken} = await this.plugin.photosApi.mediaItemsSearch(localOptions)
+        if (this.nextPageToken) Object.assign(localOptions, { pageToken: this.nextPageToken })
+        const { mediaItems, nextPageToken } = await this.plugin.photosApi.mediaItemsSearch(localOptions)
         if (mediaItems) {
           // console.log(`appending ${mediaItems.length} items`)
           this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
