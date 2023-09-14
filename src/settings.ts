@@ -22,11 +22,11 @@ export interface GooglePhotosSettings {
   locationOption: string;
   locationFolder: string;
   locationSubfolder: string;
-
+  convertPastedLink: boolean; // Monitor paste events to see if it's a Google Photo link
+  // Date selection options
   getDateFrom: GetDateFromOptions;
   getDateFromFrontMatterKey: string;
   getDateFromFormat: string;
-
   showPhotosInDateRange: boolean;
   showPhotosXDaysPast: number;
   showPhotosXDaysFuture: number;
@@ -46,14 +46,13 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   locationOption: 'note',
   locationFolder: '',
   locationSubfolder: 'photos',
-
+  convertPastedLink: true,
   getDateFrom: GetDateFromOptions.NOTE_TITLE,
   getDateFromFrontMatterKey: 'date',
   getDateFromFormat: 'YYYY-MM-DD',
-
   showPhotosInDateRange: false,
   showPhotosXDaysPast: 7,
-  showPhotosXDaysFuture: 1,
+  showPhotosXDaysFuture: 1
 }
 
 export class GooglePhotosSettingTab extends PluginSettingTab {
@@ -78,7 +77,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
      * @param {Setting} setting
      * @param {boolean} visible
      */
-    const setVisible = (setting: Setting, visible: Boolean) => {
+    const setVisible = (setting: Setting, visible: boolean) => {
       setting.settingEl.style.display = visible ? 'flex' : 'none'
     }
 
@@ -91,7 +90,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addText(text => text
         .setPlaceholder('Enter your Client ID')
         .setValue(this.plugin.settings.clientId)
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.clientId = value.trim()
           await this.plugin.saveSettings()
         }))
@@ -100,7 +99,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.createEl('br')
         setting.descEl.createEl('a', {
           text: 'See the documentation',
-          href: 'https://github.com/alangrainger/obsidian-google-photos',
+          href: 'https://github.com/alangrainger/obsidian-google-photos'
         })
         setting.descEl.appendText(' for instructions on how to get this ID.')
       })
@@ -109,7 +108,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addText(text => text
         .setPlaceholder('Enter your Client Secret')
         .setValue(this.plugin.settings.clientSecret)
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.clientSecret = value.trim()
           await this.plugin.saveSettings()
         }))
@@ -118,7 +117,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.createEl('br')
         setting.descEl.createEl('a', {
           text: 'See the documentation',
-          href: 'https://github.com/alangrainger/obsidian-google-photos',
+          href: 'https://github.com/alangrainger/obsidian-google-photos'
         })
         setting.descEl.appendText(' for instructions on how to get this value.')
       })
@@ -145,7 +144,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addText(text => text
         .setPlaceholder(DEFAULT_SETTINGS.thumbnailWidth.toString())
         .setValue(this.plugin.settings.thumbnailWidth.toString())
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.thumbnailWidth = +value
           await this.plugin.saveSettings()
         }))
@@ -155,7 +154,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addText(text => text
         .setPlaceholder(DEFAULT_SETTINGS.thumbnailHeight.toString())
         .setValue(this.plugin.settings.thumbnailHeight.toString())
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.thumbnailHeight = +value
           await this.plugin.saveSettings()
         }))
@@ -164,7 +163,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addText(text => text
         .setPlaceholder(DEFAULT_SETTINGS.filename)
         .setValue(this.plugin.settings.filename)
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.filename = value.trim()
           await this.plugin.saveSettings()
         }))
@@ -172,7 +171,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.appendText('This is the filename format used for saving thumbnail images. It must be in ')
         setting.descEl.createEl('a', {
           text: 'MomentJS format',
-          href: 'https://momentjs.com/docs/#/displaying/format/',
+          href: 'https://momentjs.com/docs/#/displaying/format/'
         })
         setting.descEl.appendText('.')
         setting.descEl.createEl('br')
@@ -198,7 +197,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         new FolderSuggest(search.inputEl)
         search.setPlaceholder('Path/For/Thumbnails')
           .setValue(this.plugin.settings.locationFolder)
-          .onChange(async (value) => {
+          .onChange(async value => {
             this.plugin.settings.locationFolder = value.trim()
             await this.plugin.saveSettings()
           })
@@ -210,9 +209,9 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         text
           .setPlaceholder('photos')
           .setValue(this.plugin.settings.locationSubfolder)
-          .onChange(async (value) => {
+          .onChange(async value => {
             // Strip leading/trailing slashes
-            this.plugin.settings.locationSubfolder = value.trim().replace(/^[\\\/]+/, '').replace(/[\\\/]+$/, '')
+            this.plugin.settings.locationSubfolder = value.trim().replace(/^[/\\]+/, '').replace(/[/\\]+$/, '')
             await this.plugin.saveSettings()
           })
       })
@@ -225,7 +224,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           .addOption('subfolder', 'In a subfolder of the current note')
           .addOption('specified', 'In a specific folder')
           .setValue(this.plugin.settings.locationOption)
-          .onChange(async (value) => {
+          .onChange(async value => {
             // Show or hide the folder input field, depending on the choice
             setVisible(locationFolderEl, value === 'specified')
             setVisible(locationSubfolderEl, value === 'subfolder')
@@ -244,7 +243,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addTextArea(text => text
         .setPlaceholder(DEFAULT_SETTINGS.thumbnailMarkdown)
         .setValue(this.plugin.settings.thumbnailMarkdown)
-        .onChange(async (value) => {
+        .onChange(async value => {
           this.plugin.settings.thumbnailMarkdown = value
           await this.plugin.saveSettings()
         }))
@@ -270,7 +269,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.defaultToDailyPhotos)
-          .onChange(async (value) => {
+          .onChange(async value => {
             this.plugin.settings.defaultToDailyPhotos = value
             await this.plugin.saveSettings()
             this.display()
@@ -331,7 +330,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           setting.descEl.appendText('This is the ')
           setting.descEl.createEl('a', {
             text: 'MomentJS date format',
-            href: 'https://momentjs.com/docs/#/displaying/format/',
+            href: 'https://momentjs.com/docs/#/displaying/format/'
           })
           setting.descEl.appendText(
             ' used in the title of your daily notes, so we can parse them back to a date.'
@@ -371,7 +370,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           setting.descEl.appendText('This is the ')
           setting.descEl.createEl('a', {
             text: 'MomentJS date format',
-            href: 'https://momentjs.com/docs/#/displaying/format/',
+            href: 'https://momentjs.com/docs/#/displaying/format/'
           })
           setting.descEl.appendText(
             ' used in the front matter property, so we can parse it back to a date.'
@@ -381,11 +380,11 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Show photos in range of days?')
-      .setDesc(`Enable to show photos from a range of days before and after the note date.`)
+      .setDesc('Enable to show photos from a range of days before and after the note date.')
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.showPhotosInDateRange)
-          .onChange(async (value) => {
+          .onChange(async value => {
             this.plugin.settings.showPhotosInDateRange = value
             await this.plugin.saveSettings()
             this.display()
@@ -400,7 +399,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           text
             .setPlaceholder(DEFAULT_SETTINGS.showPhotosXDaysPast.toString())
             .setValue(this.plugin.settings.showPhotosXDaysPast.toString())
-            .onChange(async (value) => {
+            .onChange(async value => {
               if (isNaN(+value)) {
                 return
               }
@@ -420,7 +419,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           text
             .setPlaceholder(DEFAULT_SETTINGS.showPhotosXDaysFuture.toString())
             .setValue(this.plugin.settings.showPhotosXDaysFuture.toString())
-            .onChange(async (value) => {
+            .onChange(async value => {
               if (isNaN(+value)) {
                 return
               }
