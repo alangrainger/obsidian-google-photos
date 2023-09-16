@@ -1,12 +1,31 @@
 import { moment, Notice, Platform } from 'obsidian'
 import GooglePhotos from './main'
+import * as http from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
 
 export default class OAuth {
   plugin: GooglePhotos
+  port: number
+  redirectUrl: string
+  httpServer: http.Server
+  authUrl: string
   private readonly callbackUrl = 'https://localhost/google-photos'
 
   constructor (plugin: GooglePhotos) {
     this.plugin = plugin
+    this.port = Math.floor(Math.random() * 15000 + 50000) // random port from 50,000-65,000
+    this.redirectUrl = `http://localhost:${this.port}/google-photos`
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+    url.search = new URLSearchParams({
+      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      access_type: 'offline',
+      state: 'state_parameter_passthrough_value',
+      redirect_uri: this.redirectUrl,
+      client_id: this.plugin.settings.clientId
+    }).toString()
+    this.authUrl = url.toString()
   }
 
   async authenticate (): Promise<boolean> {
@@ -33,8 +52,27 @@ export default class OAuth {
     return this.requestPermissions()
   }
 
-  requestPermissions (): Promise<boolean> {
-    return new Promise(resolve => {
+  async requestPermissions (): Promise<boolean> {
+    // Check to see if there is already a server running
+    if (!this.httpServer) {
+      this.httpServer = http
+        .createServer(async (req: IncomingMessage, res: ServerResponse) => {
+          console.log(req)
+          const code = new URL(req.url || '').searchParams.get('code') || ''
+          /* const tokenRes = await this.getAccessToken({
+            code,
+            client_id: this.plugin.settings.clientId,
+            client_secret: this.plugin.settings.clientSecret,
+            redirect_uri: this.callbackUrl,
+            grant_type: 'authorization_code'
+          }) */
+          const tokenRes = false
+          this.httpServer.close()
+          resolve(tokenRes)
+        })
+        .listen(this.port, () => {
+          this.startAuthProcess()
+        })
       if (Platform.isMobile) {
         // Electron BrowserWindow is not supported on mobile:
         // https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md#nodejs-and-electron-api
@@ -42,53 +80,15 @@ export default class OAuth {
         resolve(false)
       } else {
         // Desktop devices only
-        const {BrowserWindow} = require('@electron/remote')
-        const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-        codeUrl.search = new URLSearchParams({
-          scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
-          include_granted_scopes: 'true',
-          response_type: 'code',
-          access_type: 'offline',
-          state: 'state_parameter_passthrough_value',
-          redirect_uri: this.callbackUrl,
-          client_id: this.plugin.settings.clientId
-        }).toString()
-
-        // Load the Google OAuth request page in a browser window
-        const window = new BrowserWindow({
-          width: 600,
-          height: 800,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true
-          },
-        })
-        window.loadURL(codeUrl.href).then()
-
-        // Set up to watch for the callback URL
-        const {session: {webRequest}} = window.webContents
-        const filter = {
-          urls: [this.callbackUrl + '*']
-        }
-        webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
-          // Exchange the authorisation code for an access token
-          const code = new URL(url).searchParams.get('code') || ''
-          const res = await this.getAccessToken({
-            code: code,
-            client_id: this.plugin.settings.clientId,
-            client_secret: this.plugin.settings.clientSecret,
-            redirect_uri: this.callbackUrl,
-            grant_type: 'authorization_code'
-          })
-          resolve(res)
-          if (window) window.close()
-        })
-
-        window.on('closed', () => {
-          resolve(false)
-        })
       }
-    })
+    }
+
+    // Start the auth process
+    this.startAuthProcess()
+  }
+
+  startAuthProcess () {
+    window.open(this.authUrl)
   }
 
   /**
@@ -105,7 +105,7 @@ export default class OAuth {
       }
     })
     if (res.status === 200) {
-      const {access_token, refresh_token, expires_in} = await res.json()
+      const { access_token, refresh_token, expires_in } = await res.json()
       this.plugin.settings.accessToken = access_token
       if (refresh_token) {
         this.plugin.settings.refreshToken = refresh_token
