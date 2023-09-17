@@ -94,10 +94,6 @@ export class DailyPhotosModal extends PhotosModal {
   dateSetting: Setting
   dateToggle: ToggleComponent
 
-  constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
-    super(app, plugin, editor, view)
-  }
-
   /**
    * Update the human-readable date toggle text
    */
@@ -118,7 +114,7 @@ export class DailyPhotosModal extends PhotosModal {
   async updateView () {
     if (this.limitPhotosToNoteDate) {
       let dateFilter: GooglePhotosDateFilter = {
-        dates: [dateToGoogleDateFilter(this.noteDate)],
+        dates: [dateToGoogleDateFilter(this.noteDate)]
       }
       if (this.plugin.settings.showPhotosInDateRange) {
         // Determine the date range to show photos in
@@ -128,7 +124,7 @@ export class DailyPhotosModal extends PhotosModal {
           ranges: [{
             startDate: dateToGoogleDateFilter(xDaysBeforeDate),
             endDate: dateToGoogleDateFilter(xDaysAfterDate)
-          }],
+          }]
         } as object
       }
       this.updateDateText()
@@ -153,7 +149,8 @@ export class DailyPhotosModal extends PhotosModal {
     this.gridView = new GridView({
       scrollEl: modalEl,
       plugin: this.plugin,
-      onThumbnailClick: (event: { target: ThumbnailImage }) => this.insertImageIntoEditor(event)
+      onThumbnailClick: (event: { target: ThumbnailImage }) => this.insertImageIntoEditor(event),
+      modal: this
     })
 
     // Check for a valid date from the note title
@@ -195,7 +192,7 @@ export class DailyPhotosModal extends PhotosModal {
       .then(setting => {
         this.dateSetting = setting
         this.updateDateText()
-        setting.nameEl.onclick = () => {datePicker.show(setting.nameEl)}
+        setting.nameEl.onclick = () => { datePicker.show(setting.nameEl) }
       })
 
     // Attach the grid view to the modal

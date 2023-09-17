@@ -28,8 +28,8 @@ export default class GooglePhotos extends Plugin {
     })
 
     this.registerObsidianProtocolHandler('google-photos', async data => {
-      //
-      // The data comes back twice from the handler, so make sure to only process it once
+      // This is the callback from the Google Auth Proxy
+      // https://github.com/alangrainger/obsidian-google-auth-proxy
       await this.oauth.sendCode(data.code)
     })
 
