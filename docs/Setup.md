@@ -15,11 +15,11 @@ Use the same name on the next screen which asks for the "product name":
 
 ![](../img/setup-create-project.png)
 
-4. Fill in these settings for the OAuth configuration screen:
+4. Fill in this Redirect URI for the OAuth configuration screen:
 
 Redirect URI: `https://alangrainger.github.io/obsidian-google-auth-proxy/?handler=google-photos`
 
-> **What is this?**
+> ### What is this?
 > 
 > Google OAuth cannot use an `obsidian://` URL as a redirect URI, so we use a proxy running on Github Pages to transparently pass a Google OAuth request back to Obsidian. The incoming data in itself is useless without the `client_id` and `client_secret` which only exist inside your vault. Because it is on Github Pages, you can check the source yourself to see that it has the single function of transparently passing data back to Obsidian: https://github.com/alangrainger/obsidian-google-auth-proxy
 
