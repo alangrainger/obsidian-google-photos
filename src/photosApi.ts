@@ -25,14 +25,14 @@ export type GooglePhotosSearchParams = {
 }
 
 export type GooglePhotosAlbum = {
-  "id": string,
-  "title": string,
-  "productUrl": string,
-  "isWriteable": boolean,
-  "shareInfo": object,
-  "mediaItemsCount": string,
-  "coverPhotoBaseUrl": string,
-  "coverPhotoMediaItemId": string
+  id: string,
+  title: string,
+  productUrl: string,
+  isWriteable: boolean,
+  shareInfo: object,
+  mediaItemsCount: string,
+  coverPhotoBaseUrl: string,
+  coverPhotoMediaItemId: string
 }
 
 export default class PhotosApi {
@@ -56,7 +56,7 @@ export default class PhotosApi {
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
       if (!await this.plugin.oauth.authenticate()) {
-        throw 'Unauthenticated'
+        throw new Error('Unauthenticated')
       }
     }
 
@@ -66,7 +66,7 @@ export default class PhotosApi {
       Object.assign({
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + s.accessToken,
+          Authorization: 'Bearer ' + s.accessToken,
           'Content-Type': 'application/json'
         }
       }, params))

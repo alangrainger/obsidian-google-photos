@@ -27,6 +27,12 @@ export default class GooglePhotos extends Plugin {
       }
     })
 
+    this.registerObsidianProtocolHandler('google-photos', async data => {
+      // This is the callback from the Google Auth Proxy
+      // https://github.com/alangrainger/obsidian-google-auth-proxy
+      await this.oauth.sendCode(data.code)
+    })
+
     this.addCommand({
       id: 'insert-google-photo',
       name: 'Insert Google Photo',
@@ -44,7 +50,7 @@ export default class GooglePhotos extends Plugin {
       editorCallback: async (editor: Editor) => {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new AlbumSuggest(this).show((album) => {
+          new AlbumSuggest(this).show(album => {
             const searchJson = JSON.stringify({
               title: album.title,
               query: {

@@ -2,6 +2,7 @@ import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
 import { Moment } from 'moment'
 import { GooglePhotosSearchParams } from 'photosApi'
+import { PhotosModal } from './photoModal'
 
 export class ThumbnailImage extends Image {
   photoId: string
@@ -55,7 +56,7 @@ export default class Renderer {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
-      img.src = baseUrl + `=w500-h130`
+      img.src = baseUrl + '=w500-h130'
       img.photoId = id
       img.baseUrl = baseUrl
       img.productUrl = productUrl
@@ -74,6 +75,7 @@ export class GridView extends Renderer {
   scrollEl: HTMLElement
   containerEl: HTMLElement
   gridEl: HTMLElement
+  modal: PhotosModal
   title: string
   searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
@@ -83,11 +85,12 @@ export class GridView extends Renderer {
   moreResults: boolean = true
   active: boolean = true
 
-  constructor ({ scrollEl, plugin, onThumbnailClick, title }: {
+  constructor ({ scrollEl, plugin, onThumbnailClick, title, modal }: {
     plugin: GooglePhotos,
     scrollEl?: HTMLElement,
     onThumbnailClick?: Function,
-    title?: string
+    title?: string,
+    modal?: PhotosModal
   }) {
     super(plugin)
     if (onThumbnailClick) {
@@ -102,6 +105,7 @@ export class GridView extends Renderer {
       titleEl.className = 'google-photos-album-title'
       titleEl.innerText = title
     }
+    if (modal) this.modal = modal
     this.gridEl = this.containerEl.createEl('div')
     // Add the loading spinner
     this.containerEl.appendChild(this.spinner)
@@ -163,12 +167,20 @@ export class GridView extends Renderer {
       this.active && this.moreResults && this.scrollEl &&
       this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.thumbnailHeight) &&
       (!targetEl.innerHTML || await this.isVisible(this.scrollEl)) // Element is visible in the viewport
-      ) {
+    ) {
       // Perform the search with Photos API and output the result
       try {
         const localOptions = Object.assign({}, this.searchParams)
         if (this.nextPageToken) Object.assign(localOptions, { pageToken: this.nextPageToken })
-        const { mediaItems, nextPageToken } = await this.plugin.photosApi.mediaItemsSearch(localOptions)
+        let mediaItems, nextPageToken
+        try {
+          const res = await this.plugin.photosApi.mediaItemsSearch(localOptions)
+          mediaItems = res.mediaItems
+          nextPageToken = res.nextPageToken
+        } catch (e) {
+          console.log(e)
+          this.modal.close()
+        }
         if (mediaItems) {
           this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
         } else if (!targetEl.childElementCount) {

@@ -1,9 +1,19 @@
-import { moment, Notice, Platform } from 'obsidian'
+import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
+
+/*
+Google OAuth cannot use an obsidian:// URL as a redirect URI, so we use a proxy
+running on Github Pages to transparently pass a Google OAuth request back to Obsidian.
+
+Because it is on Github Pages, you can check the source yourself to see that it is
+indeed a transparent proxy to pass the data onto an obsidian:// handler
+
+https://github.com/alangrainger/obsidian-google-auth-proxy
+ */
+const callbackUrl = 'https://alangrainger.github.io/obsidian-google-auth-proxy/?handler=google-photos'
 
 export default class OAuth {
   plugin: GooglePhotos
-  private readonly callbackUrl = 'https://localhost/google-photos'
 
   constructor (plugin: GooglePhotos) {
     this.plugin = plugin
@@ -30,64 +40,34 @@ export default class OAuth {
     }
     // If we can't refresh the access token, launch a full permissions request
     console.log('Google Photos: attempting permissions')
-    return this.requestPermissions()
+    this.requestPermissions()
+    // This is an asynchronous call which is picked up by an Obsidian protocol handler
+    // We return false here because there will no auth at this point
+    return false
   }
 
-  requestPermissions (): Promise<boolean> {
-    return new Promise(resolve => {
-      if (Platform.isMobile) {
-        // Electron BrowserWindow is not supported on mobile:
-        // https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md#nodejs-and-electron-api
-        new Notice('You will need to authenticate using a desktop device first before you can use a mobile device.')
-        resolve(false)
-      } else {
-        // Desktop devices only
-        const {BrowserWindow} = require('@electron/remote')
-        const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-        codeUrl.search = new URLSearchParams({
-          scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
-          include_granted_scopes: 'true',
-          response_type: 'code',
-          access_type: 'offline',
-          state: 'state_parameter_passthrough_value',
-          redirect_uri: this.callbackUrl,
-          client_id: this.plugin.settings.clientId
-        }).toString()
+  requestPermissions (): void {
+    const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+    codeUrl.search = new URLSearchParams({
+      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      access_type: 'offline',
+      state: 'state_parameter_passthrough_value',
+      redirect_uri: callbackUrl,
+      client_id: this.plugin.settings.clientId
+    }).toString()
 
-        // Load the Google OAuth request page in a browser window
-        const window = new BrowserWindow({
-          width: 600,
-          height: 800,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true
-          },
-        })
-        window.loadURL(codeUrl.href).then()
+    window.open(codeUrl.href)
+  }
 
-        // Set up to watch for the callback URL
-        const {session: {webRequest}} = window.webContents
-        const filter = {
-          urls: [this.callbackUrl + '*']
-        }
-        webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
-          // Exchange the authorisation code for an access token
-          const code = new URL(url).searchParams.get('code') || ''
-          const res = await this.getAccessToken({
-            code: code,
-            client_id: this.plugin.settings.clientId,
-            client_secret: this.plugin.settings.clientSecret,
-            redirect_uri: this.callbackUrl,
-            grant_type: 'authorization_code'
-          })
-          resolve(res)
-          if (window) window.close()
-        })
-
-        window.on('closed', () => {
-          resolve(false)
-        })
-      }
+  async sendCode (code: string) {
+    await this.getAccessToken({
+      code,
+      client_id: this.plugin.settings.clientId,
+      client_secret: this.plugin.settings.clientSecret,
+      redirect_uri: callbackUrl,
+      grant_type: 'authorization_code'
     })
   }
 
@@ -105,13 +85,14 @@ export default class OAuth {
       }
     })
     if (res.status === 200) {
-      const {access_token, refresh_token, expires_in} = await res.json()
-      this.plugin.settings.accessToken = access_token
-      if (refresh_token) {
-        this.plugin.settings.refreshToken = refresh_token
+      const tokenData = await res.json()
+      this.plugin.settings.accessToken = tokenData.access_token
+      if (tokenData.refresh_token) {
+        this.plugin.settings.refreshToken = tokenData.refresh_token
       }
-      this.plugin.settings.expires = moment().add(expires_in, 'second').format()
+      this.plugin.settings.expires = moment().add(tokenData.expires_in, 'second').format()
       await this.plugin.saveSettings()
+      new Notice('Successfully connected to Google Photos API')
       return true
     } else {
       return false
