@@ -163,7 +163,7 @@ export class GridView extends Renderer {
       this.active && this.moreResults && this.scrollEl &&
       this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.thumbnailHeight) &&
       (!targetEl.innerHTML || await this.isVisible(this.scrollEl)) // Element is visible in the viewport
-      ) {
+    ) {
       // Perform the search with Photos API and output the result
       try {
         const localOptions = Object.assign({}, this.searchParams)

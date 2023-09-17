@@ -56,7 +56,7 @@ export default class PhotosApi {
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
       if (!await this.plugin.oauth.authenticate()) {
-        throw 'Unauthenticated'
+        throw new Error('Unauthenticated')
       }
     }
 
