@@ -18,7 +18,7 @@ export type GooglePhotosDateFilter = {
 
 export type GooglePhotosSearchParams = {
   method?: string,
-  body?: any,
+  body?: string,
   filters?: {
     dateFilter?: GooglePhotosDateFilter
   }
@@ -73,15 +73,15 @@ export default class PhotosApi {
     if (resp.status === 200) {
       return resp.json()
     } else if (resp.status === 400) { // Malformed input
-      throw '⚠ Malformed input. Please check the filters you are using.'
+      throw new Error('⚠ Malformed input. Please check the filters you are using.')
     } else if (resp.status === 401) { // Unauthenticated
       if (await this.plugin.oauth.authenticate()) {
-        throw 'Retry'
+        throw new Error('Retry')
       } else {
-        throw 'Unauthenticated'
+        throw new Error('Unauthenticated')
       }
     } else {
-      throw 'Unknown status ' + resp.status
+      throw new Error('Unknown status ' + resp.status)
     }
   }
 
