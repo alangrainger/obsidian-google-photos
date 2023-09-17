@@ -21,8 +21,7 @@ Redirect URI: `https://alangrainger.github.io/obsidian-google-auth-proxy/?handle
 
 > 👉 Google OAuth cannot use an `obsidian://` URL as a redirect URI, so we use a proxy running on Github Pages to transparently pass a Google OAuth request back to Obsidian. Because it is on Github Pages, you can check the source yourself to see that it is indeed a transparent proxy to pass the data onto an obsidian:// handler
 
-![](https://github.com/alangrainger/obsidian-google-photos/assets/16197738/67aa8070-0707-40d6-af08-bda414d2d1cd)
-
+<img src="https://github.com/alangrainger/obsidian-google-photos/assets/16197738/67aa8070-0707-40d6-af08-bda414d2d1cd" style="width:500px">
 
 5. Click **Create**.
 
