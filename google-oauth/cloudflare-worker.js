@@ -32,8 +32,11 @@ async function postHandler (request, env, ctx) {
   }
   const data = await request.json()
 
-  if (data.action === 'getAccessToken') {
-    return getAccessToken(data.code, env)
+  switch (data.action) {
+    case 'getAccessToken':
+      return getAccessToken(data.code, env)
+    case 'refreshToken':
+      return refreshToken(data.refreshToken, env)
   }
 }
 
@@ -46,7 +49,22 @@ async function getAccessToken (code, env) {
     redirect_uri: redirectUrl,
     grant_type: 'authorization_code'
   }).toString()
-  const res = await fetch(url.href, {
+  return tokenResponse(url.href)
+}
+
+async function refreshToken (token, env) {
+  const url = new URL('https://oauth2.googleapis.com/token')
+  url.search = new URLSearchParams({
+    refresh_token: token,
+    client_id: env.GOOGLE_PHOTOS_CLIENT_ID,
+    client_secret: env.GOOGLE_PHOTOS_CLIENT_SECRET,
+    grant_type: 'refresh_token'
+  }).toString()
+  return tokenResponse(url.href)
+}
+
+async function tokenResponse (url) {
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   })
@@ -54,7 +72,6 @@ async function getAccessToken (code, env) {
     const token = await res.json()
     return new Response(
       JSON.stringify({
-        action: 'saveAccessToken',
         accessToken: token.access_token || null,
         refreshToken: token.refresh_token || null,
         expiresIn: token.expires_in || 0
@@ -65,6 +82,8 @@ async function getAccessToken (code, env) {
         }
       }
     )
+  } else {
+    return res
   }
 }
 
