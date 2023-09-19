@@ -2,9 +2,9 @@ import { MarkdownView, Plugin, Editor, moment, TFile } from 'obsidian'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
-import { DailyPhotosModal } from './photoModal'
 import AlbumSuggest from './suggesters/AlbumSuggest'
 import CodeblockProcessor from './codeblockProcessor'
+import { DailyPhotosModal } from './photoModal'
 
 export default class GooglePhotos extends Plugin {
   settings: GooglePhotosSettings
@@ -18,6 +18,14 @@ export default class GooglePhotos extends Plugin {
     this.oauth = new OAuth(this)
 
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
+
+    this.registerObsidianProtocolHandler('google-photos', async data => {
+      switch (data.function) {
+        case 'getAccessToken':
+          await this.oauth.getAccessToken(data.code)
+          break
+      }
+    })
 
     // Codeblock handler
     this.registerMarkdownCodeBlockProcessor('photos', (source, el, context) => {

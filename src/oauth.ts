@@ -1,5 +1,7 @@
-import { moment, Notice, Platform } from 'obsidian'
+import { moment, Notice, ObsidianProtocolData, Platform, requestUrl } from 'obsidian'
 import GooglePhotos from './main'
+
+const serviceUrl = 'https://google-auth.obsidianshare.com'
 
 export default class OAuth {
   plugin: GooglePhotos
@@ -30,91 +32,53 @@ export default class OAuth {
     }
     // If we can't refresh the access token, launch a full permissions request
     console.log('Google Photos: attempting permissions')
-    return this.requestPermissions()
+    this.requestCode()
+    return false
   }
 
-  requestPermissions (): Promise<boolean> {
-    return new Promise(resolve => {
-      if (Platform.isMobile) {
-        // Electron BrowserWindow is not supported on mobile:
-        // https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md#nodejs-and-electron-api
-        new Notice('You will need to authenticate using a desktop device first before you can use a mobile device.')
-        resolve(false)
-      } else {
-        // Desktop devices only
-        const { BrowserWindow } = require('@electron/remote')
-        const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-        codeUrl.search = new URLSearchParams({
-          scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
-          include_granted_scopes: 'true',
-          response_type: 'code',
-          access_type: 'offline',
-          state: 'state_parameter_passthrough_value',
-          redirect_uri: this.callbackUrl,
-          client_id: this.plugin.settings.clientId
-        }).toString()
-
-        // Load the Google OAuth request page in a browser window
-        const window = new BrowserWindow({
-          width: 600,
-          height: 800,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true
-          }
-        })
-        window.loadURL(codeUrl.href).then()
-
-        // Set up to watch for the callback URL
-        const { session: { webRequest } } = window.webContents
-        const filter = {
-          urls: [this.callbackUrl + '*']
-        }
-        webRequest.onBeforeRequest(filter, async ({ url }: { url: string }) => {
-          // Exchange the authorisation code for an access token
-          const code = new URL(url).searchParams.get('code') || ''
-          const res = await this.getAccessToken({
-            code,
-            client_id: this.plugin.settings.clientId,
-            client_secret: this.plugin.settings.clientSecret,
-            redirect_uri: this.callbackUrl,
-            grant_type: 'authorization_code'
-          })
-          resolve(res)
-          if (window) window.close()
-        })
-
-        window.on('closed', () => {
-          resolve(false)
-        })
-      }
-    })
+  /**
+   * This function works asynchronously and receives the result via an Obsidian Protocol Handler.
+   * The result is picked up in the handler and set to getAccessToken()
+   */
+  requestCode (): void {
+    const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+    codeUrl.search = new URLSearchParams({
+      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      access_type: 'offline',
+      state: 'state_parameter_passthrough_value',
+      redirect_uri: 'https://google-auth.obsidianshare.com',
+      client_id: '257180575925-p643qmm39evc9vd6i2k2lbcprcgr6ipa.apps.googleusercontent.com'
+    }).toString()
+    window.open(codeUrl)
   }
 
   /**
    * Exchange an authorisation code or a refresh token for an access token
-   * @param {object} params - An object of URL query parameters
    */
-  async getAccessToken (params = {}): Promise<boolean> {
-    const url = new URL('https://oauth2.googleapis.com/token')
-    url.search = new URLSearchParams(params).toString()
-    const res = await fetch(url.href, {
+  async getAccessToken (code: string): Promise<boolean> {
+    console.log('getting cvode')
+    const res = await requestUrl({
+      url: serviceUrl,
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'getAccessToken',
+        code
+      })
     })
     if (res.status === 200) {
-      const token = await res.json()
-      this.plugin.settings.accessToken = token.access_token
-      if (token.refresh_token) {
-        this.plugin.settings.refreshToken = token.refresh_token
+      this.plugin.settings.accessToken = res.json.accessToken
+      if (res.json.refresh_token) {
+        this.plugin.settings.refreshToken = res.json.refreshToken
       }
-      this.plugin.settings.expires = moment().add(token.expires_in, 'second').format()
+      this.plugin.settings.expires = moment().add(res.json.expiresIn, 'second').format()
       await this.plugin.saveSettings()
       return true
-    } else {
-      return false
     }
+    return false
   }
 }
