@@ -33,11 +33,11 @@ export class PhotosModal extends Modal {
    * Save a local thumbnail and insert the thumbnail plus a link back to the original Google Photos location
    * @param event
    */
-  async insertImageIntoEditor (event: { target: ThumbnailImage }) {
+  async insertImageIntoEditor (event: MouseEvent) {
     try {
       // Remove the photo grid and just show the loading spinner while we wait for the thumbnail to download
       await this.gridView.resetGrid()
-      const thumbnailImage = event.target
+      const thumbnailImage = <ThumbnailImage>event.target
       const src = thumbnailImage.baseUrl + `=w${this.plugin.settings.thumbnailWidth}-h${this.plugin.settings.thumbnailHeight}`
       const noteFolder = this.view.file.path.split('/').slice(0, -1).join('/')
       // Use the note folder or the user-specified folder from Settings
@@ -94,10 +94,6 @@ export class DailyPhotosModal extends PhotosModal {
   dateSetting: Setting
   dateToggle: ToggleComponent
 
-  constructor (app: App, plugin: GooglePhotos, editor: Editor, view: MarkdownView) {
-    super(app, plugin, editor, view)
-  }
-
   /**
    * Update the human-readable date toggle text
    */
@@ -118,7 +114,7 @@ export class DailyPhotosModal extends PhotosModal {
   async updateView () {
     if (this.limitPhotosToNoteDate) {
       let dateFilter: GooglePhotosDateFilter = {
-        dates: [dateToGoogleDateFilter(this.noteDate)],
+        dates: [dateToGoogleDateFilter(this.noteDate)]
       }
       if (this.plugin.settings.showPhotosInDateRange) {
         // Determine the date range to show photos in
@@ -128,7 +124,7 @@ export class DailyPhotosModal extends PhotosModal {
           ranges: [{
             startDate: dateToGoogleDateFilter(xDaysBeforeDate),
             endDate: dateToGoogleDateFilter(xDaysAfterDate)
-          }],
+          }]
         } as object
       }
       this.updateDateText()
@@ -153,7 +149,7 @@ export class DailyPhotosModal extends PhotosModal {
     this.gridView = new GridView({
       scrollEl: modalEl,
       plugin: this.plugin,
-      onThumbnailClick: (event: { target: ThumbnailImage }) => this.insertImageIntoEditor(event)
+      onThumbnailClick: event => this.insertImageIntoEditor(event)
     })
 
     // Check for a valid date from the note title
@@ -195,7 +191,7 @@ export class DailyPhotosModal extends PhotosModal {
       .then(setting => {
         this.dateSetting = setting
         this.updateDateText()
-        setting.nameEl.onclick = () => {datePicker.show(setting.nameEl)}
+        setting.nameEl.onclick = () => { datePicker.show(setting.nameEl) }
       })
 
     // Attach the grid view to the modal

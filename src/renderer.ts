@@ -11,6 +11,8 @@ export class ThumbnailImage extends Image {
   creationTime: Moment
 }
 
+type ThumbnailClick = (event: MouseEvent) => Promise<void>
+
 export default class Renderer {
   plugin: GooglePhotos
   thumbnailWidth: number
@@ -77,7 +79,7 @@ export class GridView extends Renderer {
   title: string
   searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
-  onThumbnailClick: Function = () => {}
+  onThumbnailClick: ThumbnailClick
   nextPageToken: string
   fetching = false
   moreResults = true
@@ -86,7 +88,7 @@ export class GridView extends Renderer {
   constructor ({ scrollEl, plugin, onThumbnailClick, title }: {
     plugin: GooglePhotos,
     scrollEl?: HTMLElement,
-    onThumbnailClick?: Function,
+    onThumbnailClick?: ThumbnailClick,
     title?: string
   }) {
     super(plugin)
