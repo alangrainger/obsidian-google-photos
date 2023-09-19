@@ -42,7 +42,7 @@ export default class OAuth {
         resolve(false)
       } else {
         // Desktop devices only
-        const {BrowserWindow} = require('@electron/remote')
+        const { BrowserWindow } = require('@electron/remote')
         const codeUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         codeUrl.search = new URLSearchParams({
           scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
@@ -61,20 +61,20 @@ export default class OAuth {
           webPreferences: {
             nodeIntegration: false,
             contextIsolation: true
-          },
+          }
         })
         window.loadURL(codeUrl.href).then()
 
         // Set up to watch for the callback URL
-        const {session: {webRequest}} = window.webContents
+        const { session: { webRequest } } = window.webContents
         const filter = {
           urls: [this.callbackUrl + '*']
         }
-        webRequest.onBeforeRequest(filter, async ({url}: { url: string }) => {
+        webRequest.onBeforeRequest(filter, async ({ url }: { url: string }) => {
           // Exchange the authorisation code for an access token
           const code = new URL(url).searchParams.get('code') || ''
           const res = await this.getAccessToken({
-            code: code,
+            code,
             client_id: this.plugin.settings.clientId,
             client_secret: this.plugin.settings.clientSecret,
             redirect_uri: this.callbackUrl,
@@ -105,12 +105,12 @@ export default class OAuth {
       }
     })
     if (res.status === 200) {
-      const {access_token, refresh_token, expires_in} = await res.json()
-      this.plugin.settings.accessToken = access_token
-      if (refresh_token) {
-        this.plugin.settings.refreshToken = refresh_token
+      const token = await res.json()
+      this.plugin.settings.accessToken = token.access_token
+      if (token.refresh_token) {
+        this.plugin.settings.refreshToken = token.refresh_token
       }
-      this.plugin.settings.expires = moment().add(expires_in, 'second').format()
+      this.plugin.settings.expires = moment().add(token.expires_in, 'second').format()
       await this.plugin.saveSettings()
       return true
     } else {

@@ -18,21 +18,21 @@ export type GooglePhotosDateFilter = {
 
 export type GooglePhotosSearchParams = {
   method?: string,
-  body?: any,
+  body?: string,
   filters?: {
     dateFilter?: GooglePhotosDateFilter
   }
 }
 
 export type GooglePhotosAlbum = {
-  "id": string,
-  "title": string,
-  "productUrl": string,
-  "isWriteable": boolean,
-  "shareInfo": object,
-  "mediaItemsCount": string,
-  "coverPhotoBaseUrl": string,
-  "coverPhotoMediaItemId": string
+  'id': string,
+  'title': string,
+  'productUrl': string,
+  'isWriteable': boolean,
+  'shareInfo': object,
+  'mediaItemsCount': string,
+  'coverPhotoBaseUrl': string,
+  'coverPhotoMediaItemId': string
 }
 
 export default class PhotosApi {
@@ -56,7 +56,7 @@ export default class PhotosApi {
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
       if (!await this.plugin.oauth.authenticate()) {
-        throw 'Unauthenticated'
+        throw new Error('Unauthenticated')
       }
     }
 
@@ -66,22 +66,22 @@ export default class PhotosApi {
       Object.assign({
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + s.accessToken,
+          Authorization: 'Bearer ' + s.accessToken,
           'Content-Type': 'application/json'
         }
       }, params))
     if (resp.status === 200) {
       return resp.json()
     } else if (resp.status === 400) { // Malformed input
-      throw '⚠ Malformed input. Please check the filters you are using.'
+      throw new Error('⚠ Malformed input. Please check the filters you are using.')
     } else if (resp.status === 401) { // Unauthenticated
       if (await this.plugin.oauth.authenticate()) {
-        throw 'Retry'
+        throw new Error('Retry')
       } else {
-        throw 'Unauthenticated'
+        throw new Error('Unauthenticated')
       }
     } else {
-      throw 'Unknown status ' + resp.status
+      throw new Error('Unknown status ' + resp.status)
     }
   }
 
