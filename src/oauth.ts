@@ -110,7 +110,7 @@ export default class OAuth {
       if (refresh_token) {
         this.plugin.settings.refreshToken = refresh_token
       }
-      this.plugin.settings.expires = moment().add(expires_in, 'second').format()
+      this.plugin.settings.expires = moment().add(token.expires_in, 'second').format()
       await this.plugin.saveSettings()
       return true
     } else {

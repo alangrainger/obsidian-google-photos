@@ -211,7 +211,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.locationSubfolder)
           .onChange(async value => {
             // Strip leading/trailing slashes
-            this.plugin.settings.locationSubfolder = value.trim().replace(/^[/\\]+/, '').replace(/[/\\]+$/, '')
+            this.plugin.settings.locationSubfolder = value.trim().replace(/^[\\/]+/, '').replace(/[\\/]+$/, '')
             await this.plugin.saveSettings()
           })
       })
