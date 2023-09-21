@@ -64,7 +64,6 @@ export default class OAuth {
       this.httpServer = http
         .createServer(async (req, res) => {
           if (req && req?.url?.startsWith('/google-photos')) {
-            console.log(req.url)
             const code = new URL(this.redirectUrl + (req.url || '')).searchParams.get('code') || ''
             const tokenRes = await this.getAccessToken({
               code,
