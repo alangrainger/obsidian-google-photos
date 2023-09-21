@@ -22,11 +22,11 @@ export interface GooglePhotosSettings {
   locationOption: string;
   locationFolder: string;
   locationSubfolder: string;
-
+  convertPastedLink: boolean; // Monitor paste events to see if it's a Google Photo link
+  // Date selection options
   getDateFrom: GetDateFromOptions;
   getDateFromFrontMatterKey: string;
   getDateFromFormat: string;
-
   showPhotosInDateRange: boolean;
   showPhotosXDaysPast: number;
   showPhotosXDaysFuture: number;
@@ -46,11 +46,10 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   locationOption: 'note',
   locationFolder: '',
   locationSubfolder: 'photos',
-
+  convertPastedLink: true,
   getDateFrom: GetDateFromOptions.NOTE_TITLE,
   getDateFromFrontMatterKey: 'date',
   getDateFromFormat: 'YYYY-MM-DD',
-
   showPhotosInDateRange: false,
   showPhotosXDaysPast: 7,
   showPhotosXDaysFuture: 1
