@@ -8,7 +8,7 @@ To connect to Google Photos from a third-party plugin, you will need to create a
 
 2. Create a new project and give it any name you like. "Obsidian Google Photos" is a good choice.
 
-<img src="images/create-project.png" width="400">
+<img src="images/create-project.png" width="500">
 
 3. Click Create. Once the new project has been created, ensure that it is selected in the top menubar:
 
@@ -21,41 +21,49 @@ To connect to Google Photos from a third-party plugin, you will need to create a
 5. Search for "photos", then choose the Photos API, and then **Enable**:
 
 <img src="images/photos-api.png" width="500">
-
+<br>
 <img src="images/enable-photos.png" width="400">
 
-6. Click on **Credentials** > **Create credentials** > **OAuth client ID**:
+6. Click on **OAuth consent screen**, choose **External** and click **Create**:
 
-<img src="images/credentials.png" width="560">
+<img src="images/oauth-consent.png" width="560">
 
-7. Consent screen 1 + 2
+7. Fill in these fields:
+
+- **App name**: Any name, "Obsidian Google Photos" is a good idea.
+- **User support email:** Your own Gmail address.
+- **Developer contact information:** Your own Gmail address.
 
 <img src="images/consent1.png" width="560">
-
+<br>
 <img src="images/consent2.png" width="560">
+
+And click **Save and continue**.
 
 8. On the **Scopes** page, just click **Save and continue**.
 
-9. On the **Test users** page, add yourself as a test user and click **Save and continue**. 
+9. On the **Test users** page, add yourself as a test user and click **Save and continue**.
 
-10. Click back into the client ID
+10. Click on **Credentials** > **Create credentials** > **OAuth client ID**:
 
-<img src="images/click-back.png" width="400">
+<img src="images/credentials.png" width="560">
 
-Copy the client ID and secret
+11. Fill in these fields:
 
-<img src="images/client-id-secret.png" width="400">
+- **Application type:** Web application
+- **Name:** Any name, "Obsidian Google Photos"
+- **Authorised redirect URIs:** `http://localhost:51894/google-photos`
 
+<img src="images/oauth-client-id.png" width="650">
 
+And click **Create**.
 
-4. Fill in these settings for the OAuth configuration screen:
+12. Click back into the client ID
 
-Redirect URI: `https://localhost/google-photos`
+<img src="images/click-back.png" width="500">
 
-![x200](../img/setup-oauth.png)
+13. Copy the client ID and secret. These are the two values you need to put into the plugin settings.
 
-5. Click **Create**.
+<img src="images/client-id-secret.png" width="500">
 
-6. Copy the `Client ID` and `Client Secret`. You will need to add these values into the Obsidian plugin settings:
-
-![](../img/setup-client-conf.png)
+14. Painful? Yes. I absolutely agree. But that's it, you're done!
