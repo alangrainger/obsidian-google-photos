@@ -21,7 +21,7 @@ To connect to Google Photos from a third-party plugin, you will need to create a
 5. Search for "photos", then choose the Photos API, and then **Enable**:
 
 <img src="images/photos-api.png" width="500">
-<br>
+
 <img src="images/enable-photos.png" width="400">
 
 6. Click on **OAuth consent screen**, choose **External** and click **Create**:
@@ -35,8 +35,8 @@ To connect to Google Photos from a third-party plugin, you will need to create a
 - **Developer contact information:** Your own Gmail address.
 
 <img src="images/consent1.png" width="560">
-<br>
-<img src="images/consent2.png" width="560">
+
+<img src="images/consent2.png" width="420">
 
 And click **Save and continue**.
 
