@@ -59,7 +59,10 @@ export default class GooglePhotos extends Plugin {
     })
   }
 
-  onunload () { }
+  onunload () {
+    // Remove the OAuth HTTP server
+    this.oauth.httpServer?.close()
+  }
 
   async loadSettings () {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())

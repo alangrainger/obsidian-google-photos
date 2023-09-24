@@ -7,22 +7,10 @@ export default class OAuth {
   port = 51894
   redirectUrl: string
   httpServer: http.Server
-  authUrl: string
 
   constructor (plugin: GooglePhotos) {
     this.plugin = plugin
     this.redirectUrl = `http://localhost:${this.port}/google-photos`
-    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-    url.search = new URLSearchParams({
-      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
-      include_granted_scopes: 'true',
-      response_type: 'code',
-      access_type: 'offline',
-      state: 'state_parameter_passthrough_value',
-      redirect_uri: this.redirectUrl,
-      client_id: this.plugin.settings.clientId
-    }).toString()
-    this.authUrl = url.toString()
   }
 
   async authenticate (): Promise<boolean> {
@@ -37,7 +25,6 @@ export default class OAuth {
         grant_type: 'refresh_token'
       })) {
         // Successfully refreshed our access
-        console.log('success')
         return true
       } else {
         // Refresh token is no longer valid
@@ -89,7 +76,17 @@ export default class OAuth {
   }
 
   startAuthProcess () {
-    window.open(this.authUrl)
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+    url.search = new URLSearchParams({
+      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      access_type: 'offline',
+      state: 'state_parameter_passthrough_value',
+      redirect_uri: this.redirectUrl,
+      client_id: this.plugin.settings.clientId
+    }).toString()
+    window.open(url.toString())
   }
 
   /**
