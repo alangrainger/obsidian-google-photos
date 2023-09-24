@@ -14,7 +14,6 @@
 	"author": "Alan Grainger",
 	"license": "GPL-3.0-or-later",
 	"devDependencies": {
-		"@electron/remote": "^2.0.8",
 		"@popperjs/core": "^2.11.6",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
