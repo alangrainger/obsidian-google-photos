@@ -52,18 +52,9 @@ export default class OAuth {
         .createServer(async (req, res) => {
           if (req && req?.url?.startsWith('/google-photos')) {
             const code = new URL(this.redirectUrl + (req.url || '')).searchParams.get('code') || ''
-            const tokenRes = await this.getAccessToken({
-              code,
-              client_id: this.plugin.settings.clientId,
-              client_secret: this.plugin.settings.clientSecret,
-              redirect_uri: this.redirectUrl,
-              grant_type: 'authorization_code'
-            })
+            await this.processCode(code)
             res.end('Authentication successful! Please return to Obsidian.')
             this.httpServer.close()
-            return tokenRes
-          } else {
-            return false
           }
         })
         .listen(this.port, () => {
@@ -87,6 +78,16 @@ export default class OAuth {
       client_id: this.plugin.settings.clientId
     }).toString()
     window.open(url.toString())
+  }
+
+  async processCode (code: string) {
+    return this.getAccessToken({
+      code,
+      client_id: this.plugin.settings.clientId,
+      client_secret: this.plugin.settings.clientSecret,
+      redirect_uri: this.redirectUrl,
+      grant_type: 'authorization_code'
+    })
   }
 
   /**
