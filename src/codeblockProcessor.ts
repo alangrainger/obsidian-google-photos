@@ -61,6 +61,7 @@ export default class CodeblockProcessor {
         params = JSON.parse(this.source)
       } catch (e) {
         // Unable to parse codeblock contents - the API will return a 'malformed input' message
+        console.log(e)
       }
       if (params.query) {
         // This is the new object format which contains additional keys for our use
