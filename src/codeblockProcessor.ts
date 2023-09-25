@@ -53,19 +53,23 @@ export default class CodeblockProcessor {
       }
     } else {
       // Attempt to parse a JSON object containing a Photos API search query
+      let params = {
+        query: null,
+        title: null
+      }
       try {
-        const params = JSON.parse(this.source)
-        if (params.query) {
-          // This is the new object format which contains additional keys for our use
-          this.title = params.title || ''
-          this.searchParams = params.query
-        } else {
-          // The correct way to write the JSON is with a 'query' param containing the Google search params.
-          // We fall back to using the full object for legacy compatibility.
-          this.searchParams = params
-        }
+        params = JSON.parse(this.source)
       } catch (e) {
-        // Unable to parse codeblock contents - we will simply render the normal thumbnail view
+        // Unable to parse codeblock contents - the API will return a 'malformed input' message
+      }
+      if (params.query) {
+        // This is the new object format which contains additional keys for our use
+        this.title = params.title || ''
+        this.searchParams = params.query
+      } else {
+        // The correct way to write the JSON is with a 'query' param containing the Google search params.
+        // We fall back to using the full object for legacy compatibility.
+        this.searchParams = params
       }
     }
     this.createGrid()

@@ -52,9 +52,12 @@ export default class OAuth {
         .createServer(async (req, res) => {
           if (req && req?.url?.startsWith('/google-photos')) {
             const code = new URL(this.redirectUrl + (req.url || '')).searchParams.get('code') || ''
-            await this.processCode(code)
-            res.end('Authentication successful! Please return to Obsidian.')
-            this.httpServer.close()
+            if (await this.processCode(code)) {
+              res.end('Authentication successful! Please return to Obsidian.')
+              this.httpServer.close()
+            } else {
+              new Notice('❌ Not able to authentication with Google Photos - please try again')
+            }
           }
         })
         .listen(this.port, () => {
