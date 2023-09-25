@@ -1,7 +1,7 @@
 {
 	"id": "google-photos",
 	"name": "Google Photos",
-	"version": "1.6.3",
+	"version": "1.6.4",
 	"minAppVersion": "0.15.0",
 	"description": "Google Photos integration for Obsidian",
 	"author": "Alan Grainger",

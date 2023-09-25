@@ -67,3 +67,9 @@ And click **Create**.
 <img src="images/client-id-secret.png" width="500">
 
 14. Painful? Yes. I absolutely agree. But that's it, you're done!
+
+## Troubleshooting
+
+If you experience issues connecting after setup, please have a look at some common solutions here:
+
+[Authentication troubleshooting](Authentication%20troubleshooting.md)

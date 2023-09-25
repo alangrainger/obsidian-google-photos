@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, Editor, moment, TFile } from 'obsidian'
+import { MarkdownView, Plugin, Editor, moment, TFile, Notice } from 'obsidian'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
@@ -18,6 +18,18 @@ export default class GooglePhotos extends Plugin {
     this.oauth = new OAuth(this)
 
     this.addSettingTab(new GooglePhotosSettingTab(this.app, this))
+
+    // Protocol handler
+    this.registerObsidianProtocolHandler('google-photos', async data => {
+      if (data.code) {
+        console.log(data.code)
+        // This is the backup method in case the local HTTP server doesn't work for that user's device
+        const res = await this.oauth.processCode(data.code)
+        if (res) {
+          new Notice('Successfully connected to Google Photos')
+        }
+      }
+    })
 
     // Codeblock handler
     this.registerMarkdownCodeBlockProcessor('photos', (source, el, context) => {
