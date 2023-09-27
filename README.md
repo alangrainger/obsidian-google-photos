@@ -106,5 +106,7 @@ If you want to adjust the styles, these are the classes used:
 
 The way that Photos API generates the URLs, the direct image links are only available for a short time and then they expire. So while you could add them to your notes, they would stop working at some point.
 
+This means you can't have a remote thumbnail image, and you can't have a link to the thumbnail either.
+
 ## Attribution
 Loading spinner from [loading.io](https://loading.io/)
