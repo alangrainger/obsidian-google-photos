@@ -4,6 +4,8 @@
 
 <a href="https://ko-fi.com/alan_" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" style="width:190px"></a>
 
+[📝💬 Obsidian forum link for this plugin](https://forum.obsidian.md/t/51062)
+
 This plugin let's you embed Google Photos images directly into Obsidian. When you select an image, it will save and embed a low-res thumbnail with a link back to the full-res image on Google Photos.
 
 ![](img/demo.gif)
