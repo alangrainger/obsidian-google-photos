@@ -10,13 +10,9 @@ http://localhost:51894/google-photos?state=state_parameter_passthrough_value&cod
 
 Instead of redirecting you back to Obsidian, you might see an error message like this:
 
-> This site can’t be reached<br>
-> localhost refused to connect.
+> Unable to connect
 > 
-> Try:
-> 
-> - Checking the connection
-> - Checking the proxy and the firewall
+> **localhost** refused to connect
 > 
 > ERR_CONNECTION_REFUSED
 
