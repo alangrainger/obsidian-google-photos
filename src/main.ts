@@ -1,17 +1,22 @@
-import { MarkdownView, Plugin, Editor, moment, TFile, Notice } from 'obsidian'
+import { FileView, MarkdownView, Plugin, Editor, moment, TFile, Notice } from 'obsidian'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
 import { DailyPhotosModal } from './photoModal'
+import { DailyPhotosView } from './view'
 import AlbumSuggest from './suggesters/AlbumSuggest'
 import CodeblockProcessor from './codeblockProcessor'
 
-export default class GooglePhotos extends Plugin {
-  settings: GooglePhotosSettings
-  photosApi: PhotosApi
-  oauth: OAuth
+export const VIEW_TYPE = "daily-google-photo";
 
-  async onload () {
+export default class GooglePhotos extends Plugin {
+    settings: GooglePhotosSettings
+    photosApi: PhotosApi
+    oauth: OAuth
+    currentFile: string | undefined;
+    currentFilePath: string | undefined;
+
+    async onload () {
     await this.loadSettings()
 
     this.photosApi = new PhotosApi(this)
@@ -69,6 +74,34 @@ export default class GooglePhotos extends Plugin {
         }
       }
     })
+
+    // This creates an icon in the left ribbon.
+    this.addRibbonIcon('camera', 'Google Photo Plugin', (evt: MouseEvent) => {
+        this.activateView();
+    });
+
+    this.registerEvent(this.app.workspace.on('active-leaf-change', async (leaf) => {
+      // @ts-ignore
+      let view: FileView = this.app.workspace.getActiveFileView();
+      if (!view || !view.file) return;
+
+      this.currentFile = view.file.name;
+      this.currentFilePath = view.file.path;
+      this.refresh();
+    }));
+
+    this.registerView(
+        VIEW_TYPE,
+        (leaf) => new DailyPhotosView(leaf, this),
+    );
+
+    this.addCommand({
+			id: "open-daily-google-photo-pane",
+			name: "open-daily-google-photo-pane",
+			callback: () => {
+				this.activateView();
+			}
+		});
   }
 
   onunload () {
@@ -106,4 +139,20 @@ export default class GooglePhotos extends Plugin {
       return moment()
     }
   }
+
+    async activateView() {
+        if (this.app.workspace.getLeavesOfType(VIEW_TYPE).length === 0) {
+            await this.app.workspace.getRightLeaf(false).setViewState({
+                type: VIEW_TYPE,
+                active: true,
+            });
+        }
+        this.app.workspace.revealLeaf(
+            this.app.workspace.getLeavesOfType(VIEW_TYPE)[0]
+        );
+    }
+
+    async refresh() {
+        // todo: triggering to update pane
+      }
 }

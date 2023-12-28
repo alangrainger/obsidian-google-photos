@@ -16,6 +16,9 @@ export interface GooglePhotosSettings {
   expires: string;
   thumbnailWidth: number;
   thumbnailHeight: number;
+  displayThumbnailCrop: boolean;
+  displayThumbnailWidth: number;
+  displayThumbnailHeight: number;
   filename: string;
   thumbnailMarkdown: string;
   defaultToDailyPhotos: boolean;
@@ -40,6 +43,9 @@ export const DEFAULT_SETTINGS: GooglePhotosSettings = {
   expires: moment().format(),
   thumbnailWidth: 400,
   thumbnailHeight: 280,
+  displayThumbnailCrop: true,
+  displayThumbnailHeight: 150,
+  displayThumbnailWidth: 150,
   filename: 'YYYY-MM-DD[_google-photo_]HHmmss[.jpg]',
   thumbnailMarkdown: '[![]({{local_thumbnail_link}})]({{google_photo_url}}) ',
   defaultToDailyPhotos: true,

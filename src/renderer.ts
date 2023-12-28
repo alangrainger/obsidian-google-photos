@@ -17,12 +17,19 @@ export default class Renderer {
   plugin: GooglePhotos
   thumbnailWidth: number
   thumbnailHeight: number
+  displayThumbnailWidth: number
+  displayThumbnailHeight: number
+  displayThumbnailCrop: boolean
   spinner: HTMLElement
 
   constructor (plugin: GooglePhotos) {
     this.plugin = plugin
-    this.thumbnailWidth = this.plugin.settings.thumbnailWidth
-    this.thumbnailHeight = this.plugin.settings.thumbnailHeight
+    // this.thumbnailWidth = this.plugin.settings.thumbnailWidth
+    // this.thumbnailHeight = this.plugin.settings.thumbnailHeight
+
+    this.displayThumbnailWidth = this.plugin.settings.displayThumbnailWidth
+    this.displayThumbnailHeight = this.plugin.settings.displayThumbnailHeight
+    this.displayThumbnailCrop = this.plugin.settings.displayThumbnailCrop
 
     // Create a nice Google-themed loading spinner
     this.spinner = document.createElement('div')
@@ -57,7 +64,8 @@ export default class Renderer {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
-      img.src = baseUrl + '=w500-h130'
+      // img.src = baseUrl + '=w500-h130'
+      img.src = baseUrl + `=w${this.displayThumbnailWidth}-h${this.displayThumbnailHeight}` + `${this.displayThumbnailCrop ? '-c' : ''}`
       img.photoId = id
       img.baseUrl = baseUrl
       img.productUrl = productUrl
@@ -76,6 +84,7 @@ export class GridView extends Renderer {
   scrollEl: HTMLElement
   containerEl: HTMLElement
   gridEl: HTMLElement
+  titleEl: HTMLElement
   title: string
   searchParams: GooglePhotosSearchParams = {}
   plugin: GooglePhotos
@@ -96,15 +105,13 @@ export class GridView extends Renderer {
       // Add an event handler if provided
       this.onThumbnailClick = onThumbnailClick
     }
-
     // Add the photo-grid container
     this.containerEl = document.createElement('div')
-    if (title) {
-      const titleEl = this.containerEl.createEl('div')
-      titleEl.className = 'google-photos-album-title'
-      titleEl.innerText = title
-    }
+    this.titleEl = this.containerEl.createEl('div')
+    this.titleEl.className = 'google-photos-album-title'
+    this.titleEl.innerText = title || ''
     this.gridEl = this.containerEl.createEl('div')
+    this.gridEl.className = "gp-grid-layout"
     // Add the loading spinner
     this.containerEl.appendChild(this.spinner)
     this.spinner.style.display = 'block'
@@ -112,6 +119,7 @@ export class GridView extends Renderer {
     // Watch for a scroll event
     this.scrollEl = scrollEl || this.containerEl
     this.scrollEl.addEventListener('scroll', () => this.getThumbnails())
+    // console.log('title', title, this.containerEl)
   }
 
   /**
@@ -122,6 +130,7 @@ export class GridView extends Renderer {
     const oldGrid = this.gridEl
     oldGrid.empty()
     this.gridEl = document.createElement('div')
+    this.gridEl.className = "gp-grid-layout"
     this.containerEl.replaceChild(this.gridEl, oldGrid)
     this.active = true
     this.fetching = false
@@ -131,6 +140,7 @@ export class GridView extends Renderer {
 
   setTitle (title: string) {
     this.title = title
+    this.titleEl.innerText = title
   }
 
   setSearchParams (searchParams: GooglePhotosSearchParams) {
@@ -149,6 +159,7 @@ export class GridView extends Renderer {
    * @returns {Promise<void>}
    */
   getThumbnails = async () => {
+    console.log('start', this.fetching, this.active, this.moreResults, this.scrollEl, this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.displayThumbnailHeight))
     if (this.fetching) {
       // An instance is already in the process of fetching more thumbnails
       return
@@ -163,9 +174,10 @@ export class GridView extends Renderer {
      */
     while (
       this.active && this.moreResults && this.scrollEl &&
-      this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.thumbnailHeight) &&
+      this.scrollEl.scrollHeight - this.scrollEl.scrollTop < this.scrollEl.clientHeight + (5 * this.displayThumbnailHeight) &&
       (!targetEl.innerHTML || await this.isVisible(this.scrollEl)) // Element is visible in the viewport
     ) {
+      console.log('fetching..')
       // Perform the search with Photos API and output the result
       try {
         const localOptions = Object.assign({}, this.searchParams)

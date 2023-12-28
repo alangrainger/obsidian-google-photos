@@ -28,3 +28,21 @@
     margin-block-start: var(--p-spacing);
     margin-block-end: var(--p-spacing);
 }
+
+.gp-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: masonry;
+    gap: 1px;
+    padding: 0px;
+}
+
+.google-photos-grid-thumbnail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #eee;
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+}

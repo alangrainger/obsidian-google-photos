@@ -21,7 +21,8 @@ export type GooglePhotosSearchParams = {
   body?: string,
   filters?: {
     dateFilter?: GooglePhotosDateFilter
-  }
+  },
+  orderBy?: string
 }
 
 export type GooglePhotosAlbum = {
