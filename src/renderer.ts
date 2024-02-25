@@ -57,7 +57,7 @@ export default class Renderer {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
-      img.src = baseUrl + '=w500-h130'
+      img.src = `${baseUrl}=w${this.thumbnailWidth}-h${this.thumbnailHeight}`
       img.photoId = id
       img.baseUrl = baseUrl
       img.productUrl = productUrl
