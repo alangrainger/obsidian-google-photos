@@ -44,6 +44,12 @@ If you want to bring across the description text field from your photos, you cou
 {{google_photo_desc}}
 ```
 
+Alternatively if you use an [image captions plugin](https://obsidian.md/plugins?id=image-captions) you could use this format:
+
+```markdown
+[![{{google_photo_desc}}]({{local_thumbnail_link}})]({{google_photo_url}})
+```
+
 ## Insert an album
 
 1. Open the command palette, and choose **Google Photos: Insert album**.
