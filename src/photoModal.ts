@@ -71,6 +71,7 @@ export class PhotosModal extends Modal {
         local_thumbnail_link: linkPath,
         google_photo_id: thumbnailImage.photoId,
         google_photo_url: thumbnailImage.productUrl,
+        google_photo_desc: thumbnailImage.description || '', // Photo caption from Google Photos description text field
         google_base_url: thumbnailImage.baseUrl,
         taken_date: thumbnailImage.creationTime.format()
       })

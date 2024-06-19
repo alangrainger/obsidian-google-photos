@@ -2,6 +2,7 @@ export interface HandlebarTemplate {
   local_thumbnail_link?: string;
   google_photo_url?: string;
   google_photo_id?: string;
+  google_photo_desc?: string;
   google_base_url?: string;
   taken_date?: string
 }

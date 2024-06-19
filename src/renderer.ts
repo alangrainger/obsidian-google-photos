@@ -1,13 +1,14 @@
 import { moment, Notice } from 'obsidian'
 import GooglePhotos from './main'
 import { Moment } from 'moment'
-import { GooglePhotosSearchParams } from 'photosApi'
+import { GooglePhotosMediaItem, GooglePhotosSearchParams } from 'photosApi'
 
 export class ThumbnailImage extends Image {
   photoId: string
   baseUrl: string
   productUrl: string
   filename: string
+  description?: string
   creationTime: Moment
 }
 
@@ -52,17 +53,17 @@ export default class Renderer {
    * @param {array} thumbnails
    * @param {function} onclick
    */
-  appendThumbnailsToElement (el: HTMLElement, thumbnails: [], onclick: (event: MouseEvent) => void) {
-    (thumbnails || []).forEach(({ id, productUrl, baseUrl, mediaMetadata }) => {
+  appendThumbnailsToElement (el: HTMLElement, thumbnails: GooglePhotosMediaItem[], onclick: (event: MouseEvent) => void) {
+    (thumbnails || []).forEach((mediaItem: GooglePhotosMediaItem) => {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
-      img.src = baseUrl + '=w500-h130'
-      img.photoId = id
-      img.baseUrl = baseUrl
-      img.productUrl = productUrl
-      const { creationTime } = mediaMetadata
-      img.creationTime = moment(creationTime)
+      img.src = mediaItem.baseUrl + '=w500-h130'
+      img.photoId = mediaItem.id
+      img.baseUrl = mediaItem.baseUrl
+      img.productUrl = mediaItem.productUrl
+      img.description = mediaItem.description // Optional caption
+      img.creationTime = moment(mediaItem.mediaMetadata.creationTime)
       img.filename = img.creationTime.format(settings.filename)
       img.onclick = onclick
       img.classList.add('google-photos-grid-thumbnail')
@@ -148,7 +149,7 @@ export class GridView extends Renderer {
    *
    * @returns {Promise<void>}
    */
-  getThumbnails = async () => {
+  getThumbnails = async (): Promise<void> => {
     if (this.fetching) {
       // An instance is already in the process of fetching more thumbnails
       return
@@ -170,15 +171,15 @@ export class GridView extends Renderer {
       try {
         const localOptions = Object.assign({}, this.searchParams)
         if (this.nextPageToken) Object.assign(localOptions, { pageToken: this.nextPageToken })
-        const { mediaItems, nextPageToken } = await this.plugin.photosApi.mediaItemsSearch(localOptions)
-        if (mediaItems) {
-          this.appendThumbnailsToElement(targetEl, mediaItems, event => this.onThumbnailClick(event))
+        const searchResult = await this.plugin.photosApi.mediaItemsSearch(localOptions)
+        if (searchResult.mediaItems) {
+          this.appendThumbnailsToElement(targetEl, searchResult.mediaItems, event => this.onThumbnailClick(event))
         } else if (!targetEl.childElementCount) {
           targetEl.createEl('p', {
             text: 'No photos found for this query.'
           })
         }
-        this.moreResults = !!nextPageToken
+        this.moreResults = !!searchResult.nextPageToken
         if (this.moreResults) {
           this.spinner.style.display = 'block'
         } else {
@@ -187,7 +188,7 @@ export class GridView extends Renderer {
             this.spinner.style.display = 'none'
           }, targetEl.childElementCount ? 1000 : 0)
         }
-        this.nextPageToken = nextPageToken
+        this.nextPageToken = searchResult.nextPageToken
       } catch (e) {
         // Unable to fetch results from Photos API
         console.log(e)

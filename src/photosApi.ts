@@ -35,6 +35,28 @@ export type GooglePhotosAlbum = {
   'coverPhotoMediaItemId': string
 }
 
+export type GooglePhotosAlbumSearch = {
+  albums: GooglePhotosAlbum[],
+  nextPageToken: string
+}
+
+export type GooglePhotosMediaItem = {
+  'id': string,
+  'description': string,
+  'productUrl': string,
+  'baseUrl': string,
+  'mimeType': string,
+  'mediaMetadata': {
+    creationTime: string
+  },
+  'filename': string
+}
+
+export type GooglePhotosMediaItemsSearch = {
+  mediaItems: GooglePhotosMediaItem[],
+  nextPageToken: string
+}
+
 export default class PhotosApi {
   plugin: GooglePhotos
 
@@ -51,7 +73,7 @@ export default class PhotosApi {
    *
    * @throws Will throw an error if the input is malformed, or if the user is not authenticated
    */
-  async request (endpoint: string, params: GooglePhotosSearchParams = {}) {
+  async request (endpoint: string, params: GooglePhotosSearchParams = {}): Promise<object> {
     // Check to make sure we have a valid access token
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
@@ -90,19 +112,19 @@ export default class PhotosApi {
    * https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
    *
    * @param {object} options
-   * @returns {Promise<object>}
+   * @returns {Promise<GooglePhotosMediaItemsSearch>}
    */
-  async mediaItemsSearch (options = {}) {
-    return this.request('/v1/mediaItems:search', {
+  async mediaItemsSearch (options: object = {}): Promise<GooglePhotosMediaItemsSearch> {
+    return await this.request('/v1/mediaItems:search', {
       method: 'POST',
       body: JSON.stringify(options)
-    })
+    }) as unknown as GooglePhotosMediaItemsSearch
   }
 
-  async listAlbums () {
-    return this.request('/v1/albums', {
+  async listAlbums (): Promise<GooglePhotosAlbumSearch> {
+    return await this.request('/v1/albums', {
       method: 'GET'
-    })
+    }) as unknown as GooglePhotosAlbumSearch
   }
 }
 

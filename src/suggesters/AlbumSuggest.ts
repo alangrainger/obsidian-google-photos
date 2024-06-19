@@ -1,10 +1,10 @@
 import { SuggestModal } from 'obsidian'
 import GooglePhotos from '../main'
-import PhotosApi, { GooglePhotosAlbum } from '../photosApi'
+import PhotosApi, { GooglePhotosAlbum, GooglePhotosAlbumSearch } from '../photosApi'
 
 type Callback = (albumData: GooglePhotosAlbum) => void
 
-export default class AlbumSuggest extends SuggestModal<any> {
+export default class AlbumSuggest extends SuggestModal<unknown> {
   plugin: GooglePhotos
   callback: Callback
 
@@ -19,8 +19,8 @@ export default class AlbumSuggest extends SuggestModal<any> {
     super.open()
   }
 
-  async getSuggestions (query: string) {
-    let albums = []
+  async getSuggestions (query: string): Promise<GooglePhotosAlbum[]> {
+    let albums: GooglePhotosAlbum[] = []
     try {
       const photosApi = new PhotosApi(this.plugin)
       const result = await photosApi.listAlbums()
@@ -32,7 +32,7 @@ export default class AlbumSuggest extends SuggestModal<any> {
     return albums
   }
 
-  renderSuggestion (item: any, el: HTMLElement) {
+  renderSuggestion (item: { title: string }, el: HTMLElement) {
     el.setText(item.title)
   }
 
