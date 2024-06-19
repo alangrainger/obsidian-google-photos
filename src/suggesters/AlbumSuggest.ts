@@ -1,6 +1,6 @@
 import { SuggestModal } from 'obsidian'
 import GooglePhotos from '../main'
-import PhotosApi, { GooglePhotosAlbum, GooglePhotosAlbumSearch } from '../photosApi'
+import PhotosApi, { GooglePhotosAlbum } from '../photosApi'
 
 type Callback = (albumData: GooglePhotosAlbum) => void
 
