@@ -25,31 +25,32 @@ export type GooglePhotosSearchParams = {
 }
 
 export type GooglePhotosAlbum = {
-  'id': string,
-  'title': string,
-  'productUrl': string,
-  'isWriteable': boolean,
-  'shareInfo': object,
-  'mediaItemsCount': string,
-  'coverPhotoBaseUrl': string,
-  'coverPhotoMediaItemId': string
+  id: string,
+  title: string,
+  productUrl: string,
+  isWriteable: boolean,
+  isSharedAlbum?: boolean,
+  mediaItemsCount: string,
+  coverPhotoBaseUrl: string,
+  coverPhotoMediaItemId: string
 }
 
 export type GooglePhotosAlbumSearch = {
   albums: GooglePhotosAlbum[],
+  sharedAlbums: GooglePhotosAlbum[],
   nextPageToken: string
 }
 
 export type GooglePhotosMediaItem = {
-  'id': string,
-  'description': string,
-  'productUrl': string,
-  'baseUrl': string,
-  'mimeType': string,
-  'mediaMetadata': {
+  id: string,
+  description: string,
+  productUrl: string,
+  baseUrl: string,
+  mimeType: string,
+  mediaMetadata: {
     creationTime: string
   },
-  'filename': string
+  filename: string
 }
 
 export type GooglePhotosMediaItemsSearch = {
@@ -122,9 +123,29 @@ export default class PhotosApi {
   }
 
   async listAlbums (): Promise<GooglePhotosAlbumSearch> {
-    return await this.request('/v1/albums', {
+    // Get the user's own albums
+    const albums = await this.request('/v1/albums?pageSize=50', {
       method: 'GET'
     }) as unknown as GooglePhotosAlbumSearch
+
+    // Get shared albums. This includes BOTH albums owned by the user which have been shared with others,
+    // and also albums owned by others which have been shared to this user.
+    const sharedAlbums = await this.request('/v1/sharedAlbums?pageSize=50', {
+      method: 'GET'
+    }) as unknown as GooglePhotosAlbumSearch
+    if (sharedAlbums?.sharedAlbums) {
+      for (const sharedAlbum of sharedAlbums.sharedAlbums) {
+        // Check to see if this album is already present in the normal albums list
+        // (i.e. it is an album created by the user)
+        if (sharedAlbum.title && !albums.albums.find(album => album.id === sharedAlbum.id)) {
+          // Add it to the albums list
+          sharedAlbum.isSharedAlbum = true
+          albums.albums.push(sharedAlbum)
+        }
+      }
+    }
+
+    return albums
   }
 }
 
