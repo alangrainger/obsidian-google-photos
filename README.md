@@ -2,7 +2,13 @@
 
 ![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
 
-<a href="https://ko-fi.com/alan_" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" style="width:190px"></a>
+## 📢 Maintenance mode - looking for new maintainer
+
+I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone. It's only a matter of time before Google sunsets their photos app, and/or removes your access. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
+
+Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
+
+---
 
 [📝💬 Obsidian forum link for this plugin](https://forum.obsidian.md/t/51062)
 
