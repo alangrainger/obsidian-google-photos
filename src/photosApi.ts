@@ -108,6 +108,12 @@ export default class PhotosApi {
     }
   }
 
+  async createSession () {
+    return await this.request('/v1/sessions', {
+      method: 'POST'
+    })
+  }
+
   /**
    * Perform a mediaItems search
    * https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search

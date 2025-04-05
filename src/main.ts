@@ -45,7 +45,8 @@ export default class GooglePhotos extends Plugin {
       editorCallback: (editor: Editor, view: MarkdownView) => {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new DailyPhotosModal(this.app, this, editor, view).open()
+          // new DailyPhotosModal(this.app, this, editor, view).open()
+          this.photosApi.createSession().then(session => console.log(session))
         }
       }
     })
