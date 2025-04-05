@@ -1,6 +1,6 @@
 {
 	"name": "google-photos",
-	"version": "1.6.8",
+	"version": "1.7.0",
 	"description": "Google Photos integration for Obsidian",
 	"main": "main.js",
 	"scripts": {

@@ -85,7 +85,7 @@ export default class PhotosApi {
 
     // Make the authenticated request to Photos API
     const resp = await fetch(
-      'https://photoslibrary.googleapis.com' + endpoint,
+      'https://photospicker.googleapis.com' + endpoint,
       Object.assign({
         method: 'POST',
         headers: {
