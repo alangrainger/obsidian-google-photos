@@ -106,6 +106,7 @@ export default class PhotosApi {
     const resp = await fetch(
       'https://photospicker.googleapis.com' + endpoint,
       Object.assign({
+        method: 'POST',
         headers: {
           Authorization: 'Bearer ' + s.accessToken,
           'Content-Type': 'application/json'
