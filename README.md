@@ -1,4 +1,4 @@
-# 🚨 WARNING 🚨 <br>This plugin is non-functional until it can be updated to work with Google's new photo API. See [this issue](https://github.com/alangrainger/obsidian-google-photos/issues/56) for more details.
+# 🚨 WARNING 🚨 <br>This plugin is non-functional until it can be updated to work with Google's new photo API. [See this issue for more details](https://github.com/alangrainger/obsidian-google-photos/issues/56).
 
 # Google Photos for Obsidian
 
