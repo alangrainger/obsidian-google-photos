@@ -1,3 +1,5 @@
+# 🚨 WARNING 🚨 <br> This plugin is non-functional until it can be updated to work with Google's new photo API. See [this issue](https://github.com/alangrainger/obsidian-google-photos/issues/56) for more details.
+
 # Google Photos for Obsidian
 
 ![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
