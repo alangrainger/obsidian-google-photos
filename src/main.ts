@@ -3,7 +3,6 @@ import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
 import { PickerModal } from './photoModal'
-import AlbumSuggest from './suggesters/AlbumSuggest'
 import CodeblockProcessor from './codeblockProcessor'
 
 export default class GooglePhotos extends Plugin {
@@ -49,18 +48,6 @@ export default class GooglePhotos extends Plugin {
         }
       }
     })
-
-    this.addCommand({
-      id: 'insert-album',
-      name: 'Insert album (Deprecated)',
-      editorCallback: async (editor: Editor) => {
-        new Notice('⚠️ Album browsing is no longer supported with the new Google Photos API. Please use the photo picker instead.')
-        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
-        if (markdownView) {
-          new PickerModal(this.app, this, editor, markdownView).open()
-        }
-      }
-    })
   }
 
   onunload () {
@@ -78,6 +65,7 @@ export default class GooglePhotos extends Plugin {
 
   /**
    * Gets the date from the note title, front matter, or returns today based on user setting
+   * This is kept for compatibility with existing settings but is no longer used for photo filtering
    * @param file
    */
   getNoteDate (file: TFile): moment.Moment {

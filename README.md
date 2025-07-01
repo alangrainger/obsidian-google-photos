@@ -1,134 +1,128 @@
-# 🚨 WARNING 🚨 <br>This plugin is non-functional until it can be updated to work with Google's new photo API. [See this issue for more details](https://github.com/alangrainger/obsidian-google-photos/issues/56).
-
 # Google Photos for Obsidian
 
-## 🚨 Important Update - Google Photos API Changes
+## ✅ Working with Google Photos Picker API
 
-**Google has deprecated the Library API and moved to a new Picker API. This plugin has been updated to work with the new API, but with significant limitations:**
-
-### What Changed (March 2025)
-- **Date filtering removed**: Can no longer filter photos by date (daily photos, note date, etc.)
-- **Album browsing removed**: Cannot browse or display album contents automatically  
-- **Codeblock queries disabled**: Photo search queries in codeblocks no longer work
-- **Manual selection required**: Users must manually pick photos through Google Photos interface
-
-### What Still Works
-- ✅ Basic photo insertion into notes
-- ✅ Local thumbnail saving 
-- ✅ Image linking and metadata
-
-### Migration Required
-- **Re-authentication needed**: You'll need to re-authenticate due to scope changes
-- **Workflow changes**: Replace automatic date-based queries with manual photo selection
-- **Codeblock updates**: Remove or replace ````photos` codeblocks - they will show picker buttons instead
+This plugin has been successfully updated to work with Google's new Picker API after the Library API deprecation in March 2025.
 
 ---
 
-A plugin to embed photos from Google Photos into your [Obsidian](https://obsidian.md/) notes.
+A plugin to embed photos from Google Photos into your [Obsidian](https://obsidian.md/) notes using the Google Photos Picker.
 
 ## Features
 
-- ~~Query photos based on date (e.g., "today's photos") - DEPRECATED~~
-- ~~View albums and their photos - DEPRECATED~~  
-- ~~Generate galleries using codeblocks - DEPRECATED~~
-- ✅ Insert individual photos using the Google Photos picker
-- ✅ Automatically download and save thumbnails locally
-- ✅ Link back to the original photos in Google Photos
-- ✅ Customizable image templates and filenames
+- ✅ **Insert individual photos** using the Google Photos picker
+- ✅ **Automatically download and save thumbnails** locally  
+- ✅ **Link back to original photos** in Google Photos
+- ✅ **Customizable image templates** and filenames
+- ✅ **Flexible file organization** with configurable save locations
+
+## Important Changes Due to Google's API Updates
+
+**What's New:**
+- Uses Google's official Picker API for photo selection
+- Manual photo selection through Google Photos interface
+- Secure, user-controlled photo access
+
+**What's No Longer Available:**
+- ~~Date filtering (daily photos, note date queries)~~ - **Removed**
+- ~~Album browsing~~ - **Removed**  
+- ~~Automatic photo queries~~ - **Removed**
+- ~~Codeblock galleries~~ - **Removed**
 
 ## How it works
 
-This plugin uses the new Google Photos Picker API. When you want to insert photos:
+This plugin uses the Google Photos Picker API. When you want to insert photos:
 
-1. Run the "Insert Google Photo" command
-2. A picker session is created and opens Google Photos in a new window/tab  
-3. You manually select photos in the Google Photos interface
-4. Return to Obsidian and the selected photos will be displayed
-5. Click on a photo to insert it into your note
+1. Run the "Insert Google Photo" command in Obsidian
+2. Click "Open Google Photos Picker" 
+3. Select your photos in the Google Photos interface
+4. Selected photos appear in Obsidian - click to insert them
+5. Plugin automatically downloads thumbnails and creates markdown links
 
-The plugin downloads thumbnails locally and creates markdown links with customizable templates.
+## Setup
 
-## Installation and Setup
-
-### Option 1: Community Plugins (Recommended)
-
-Search for "Google Photos" in the Community Plugins section of Obsidian.
-
-### Option 2: Manual Installation
-
-1. Download the latest release from the [Releases](https://github.com/alangrainger/obsidian-google-photos/releases) page
-2. Extract the plugin files to your Obsidian plugins folder: `VaultFolder/.obsidian/plugins/obsidian-google-photos/`
-3. Reload Obsidian and enable the plugin
-
-### Google API Setup
-
-⚠️ **You must set up a Google API key** - see the [Setup Guide](docs/Setup.md) for detailed instructions.
+Follow the **[Picker API Setup Guide](docs/Setup-PickerAPI.md)** for detailed instructions on:
+- Creating a Google Cloud project
+- Enabling the Photos Library API
+- Configuring OAuth credentials
+- Setting up the plugin
 
 ## Usage
 
-### Basic Photo Insertion
+### Insert Photos
 
-1. Use the command palette: `Insert Google Photo`
-2. Click "Open Google Photos Picker" when the modal appears
-3. Select photos in the Google Photos interface that opens
-4. Return to Obsidian and click on photos to insert them
+1. Place your cursor where you want to insert a photo
+2. Open command palette (`Cmd/Ctrl + P`)
+3. Run **"Insert Google Photo"** 
+4. Click **"Open Google Photos Picker"**
+5. Select photos in Google Photos
+6. Click on any photo in the selection grid to insert it
 
-### ~~Previous Features (No Longer Available)~~
+### Customize Markdown Output
 
-The following features were removed due to Google API changes:
+In Settings, you can customize the markdown template using these variables:
 
-- ~~Daily photos based on note date~~
-- ~~Date range filtering~~ 
-- ~~Album browsing and insertion~~
-- ~~Codeblock photo galleries~~
-- ~~Automatic "today's photos" queries~~
+```markdown
+[![]({{local_thumbnail_link}})]({{google_photo_url}}) 
+```
 
-## Settings
+Available variables:
+- `{{local_thumbnail_link}}` - Path to locally saved thumbnail
+- `{{google_photo_url}}` - URL to original Google Photo  
+- `{{google_photo_desc}}` - Photo description/caption
+- `{{taken_date}}` - Date photo was taken
+- `{{google_base_url}}` - Advanced: Direct image URL
+- `{{google_photo_id}}` - Advanced: Google's photo ID
 
-### Photos API
-- **Client ID** and **Client Secret**: From your Google Cloud Console setup
-- **Authentication**: Re-authentication required due to API changes
+### File Organization
 
-### Thumbnail Settings  
-- **Thumbnail width/height**: Maximum dimensions for locally saved thumbnails
-- **Filename pattern**: Template for downloaded image filenames
-- **Thumbnail markdown**: Template for the markdown inserted into notes
+Configure where thumbnails are saved:
+- **Same folder as note** - Keeps photos with your notes
+- **Subfolder** - Organizes photos in a dedicated subfolder  
+- **Specific folder** - Centralized photo storage location
 
-### File Location
-- Choose where to save thumbnails (note folder, specified folder, or subfolder)
+## Migration from Previous Version
+
+If you used this plugin before the API migration:
+
+1. **Re-authenticate** - You'll need to set up new API credentials
+2. **Replace codeblocks** - Remove old `````photos` codeblocks 
+3. **Update workflow** - Use manual picker instead of automatic queries
+
+Legacy codeblocks will show helpful migration messages.
 
 ## Troubleshooting
 
 ### Authentication Issues
-- You'll need to re-authenticate due to the API scope changes
-- Follow the [Setup Guide](docs/Setup.md) if you encounter OAuth errors
-- Check [Authentication Troubleshooting](docs/Authentication%20troubleshooting.md) for common issues
+- Ensure you've added yourself as a test user in OAuth consent screen
+- Verify redirect URI is exactly: `http://localhost:51894/google-photos`
+- Clear browser cookies and try authentication again
 
-### API Limitations  
-- If you see deprecation warnings, this is expected - the old API features are no longer available
-- Replace codeblock queries with manual photo picker usage
-- Date-based photo selection is not possible with the new API
+### Picker Not Opening  
+- Check that Google Photos Library API is enabled in your project
+- Verify your Client ID and Secret are correct
+- Check browser console for CORS or network errors
 
-## Migration from Previous Versions
+### "Connection Refused" Error
+If localhost connection fails:
+1. Copy the error page URL
+2. Replace `http://localhost:51894/` with `obsidian://`
+3. Navigate to the modified URL to complete authentication
 
-If you were using this plugin before the API changes:
+## Development
 
-1. **Re-authenticate**: Clear your authentication and set up again
-2. **Update workflows**: Replace date-based photo queries with manual selection
-3. **Update codeblocks**: Remove ````photos` codeblocks or replace with picker buttons
-4. **Expect limitations**: Date filtering and album browsing are permanently removed
+```bash
+npm install
+npm run build
+```
 
-## Changelog
+## License
 
-### v2.0.0 (2025) - Google Picker API Migration
-- 🚨 **BREAKING**: Migrated to Google Photos Picker API  
-- ❌ **REMOVED**: Date filtering, album browsing, codeblock queries
-- ✅ **ADDED**: New picker-based photo selection interface
-- ⚠️ **REQUIRED**: Re-authentication with new OAuth scope
+GPL-3.0 license
 
 ---
 
-*This plugin is not affiliated with Google. Google Photos is a trademark of Google LLC.*
+**Note:** This plugin works with Google's current Picker API and should remain functional as long as Google maintains this API. The previous Library API limitations were imposed by Google's business decisions, not technical constraints.
 
 ![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
 

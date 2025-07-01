@@ -6,15 +6,12 @@ import {
   moment,
   Notice,
   Platform,
-  requestUrl,
-  Setting,
-  ToggleComponent
+  requestUrl
 } from 'obsidian'
 import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
-import Litepicker from 'litepicker'
-import { dateToGoogleDateFilter, GooglePhotosDateFilter, PickerSession } from 'photosApi'
+import { PickerSession } from 'photosApi'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -282,68 +279,6 @@ export class PickerModal extends PhotosModal {
     }
     
     super.onClose()
-  }
-}
-
-export class DailyPhotosModal extends PhotosModal {
-  noteDate: moment.Moment
-  limitPhotosToNoteDate = false
-  dateSetting: Setting
-  dateToggle: ToggleComponent
-
-  /**
-   * Update the human-readable date toggle text
-   */
-  updateDateText () {
-    // Note: Date filtering is no longer available with Picker API
-    this.dateSetting?.setName(`Note: Date filtering is not available with the new Google Photos API`)
-  }
-
-  /**
-   * Update the date filter (if needed) and reset the photo grid
-   */
-  async updateView () {
-    // Date filtering is no longer supported with Picker API
-    // Show notice to user about this limitation
-    new Notice('⚠️ Date filtering is no longer supported with the new Google Photos API. Please use the picker to manually select photos.')
-    
-    // Redirect to picker modal instead
-    this.close()
-    new PickerModal(this.app, this.plugin, this.editor, this.view).open()
-  }
-
-  async onOpen () {
-    const { contentEl, modalEl } = this
-    
-    contentEl.createEl('h2', { text: 'Google Photos Integration Update' })
-    
-    const warningEl = contentEl.createEl('div', { cls: 'google-photos-warning' })
-    warningEl.createEl('p', { 
-      text: '⚠️ Important: Google has updated their Photos API. Date filtering and automatic "daily photos" are no longer available.' 
-    })
-    warningEl.createEl('p', { 
-      text: 'You will now need to manually select photos through the Google Photos picker interface.' 
-    })
-    
-    const btnContainer = contentEl.createEl('div', { cls: 'google-photos-btn-container' })
-    
-    const openPickerBtn = btnContainer.createEl('button', {
-      text: 'Open Photo Picker',
-      cls: 'mod-cta'
-    })
-    
-    openPickerBtn.onclick = () => {
-      this.close()
-      new PickerModal(this.app, this.plugin, this.editor, this.view).open()
-    }
-    
-    const cancelBtn = btnContainer.createEl('button', {
-      text: 'Cancel'
-    })
-    
-    cancelBtn.onclick = () => {
-      this.close()
-    }
   }
 }
 

@@ -1,46 +1,6 @@
 import { moment } from 'obsidian'
 import GooglePhotos from './main'
 
-export type GooglePhotosDate = {
-  year: number;
-  month: number;
-  day: number;
-}
-
-// https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search#DateFilter
-export type GooglePhotosDateFilter = {
-  dates?: Array<GooglePhotosDate>;
-  ranges?: {
-    startDate: GooglePhotosDate;
-    endDate: GooglePhotosDate;
-  }
-}
-
-export type GooglePhotosSearchParams = {
-  method?: string,
-  body?: string,
-  filters?: {
-    dateFilter?: GooglePhotosDateFilter
-  }
-}
-
-export type GooglePhotosAlbum = {
-  id: string,
-  title: string,
-  productUrl: string,
-  isWriteable: boolean,
-  isSharedAlbum?: boolean,
-  mediaItemsCount: string,
-  coverPhotoBaseUrl: string,
-  coverPhotoMediaItemId: string
-}
-
-export type GooglePhotosAlbumSearch = {
-  albums: GooglePhotosAlbum[],
-  sharedAlbums: GooglePhotosAlbum[],
-  nextPageToken: string
-}
-
 export type GooglePhotosMediaItem = {
   id: string,
   description: string,
@@ -53,12 +13,7 @@ export type GooglePhotosMediaItem = {
   filename: string
 }
 
-export type GooglePhotosMediaItemsSearch = {
-  mediaItems: GooglePhotosMediaItem[],
-  nextPageToken: string
-}
-
-// New Picker API types
+// Picker API types
 export type PickerSession = {
   id: string,
   pickerUri: string,
@@ -229,32 +184,5 @@ export default class PhotosApi {
     
     console.log('Converted media item:', converted)
     return converted
-  }
-
-  /**
-   * Perform a mediaItems search - DEPRECATED WITH PICKER API
-   * This method is kept for backward compatibility but will show a picker instead
-   * 
-   * @param {object} options
-   * @returns {Promise<GooglePhotosMediaItemsSearch>}
-   */
-  async mediaItemsSearch (options: object = {}): Promise<GooglePhotosMediaItemsSearch> {
-    throw new Error('mediaItemsSearch is no longer supported. Use the photo picker interface instead.')
-  }
-
-  /**
-   * List albums - DEPRECATED WITH PICKER API
-   * @returns {Promise<GooglePhotosAlbumSearch>}
-   */
-  async listAlbums (): Promise<GooglePhotosAlbumSearch> {
-    throw new Error('Album listing is no longer supported with the Picker API.')
-  }
-}
-
-export function dateToGoogleDateFilter (date: moment.Moment) {
-  return {
-    year: +date.format('YYYY') || 0,
-    month: +date.format('M') || 0,
-    day: +date.format('D') || 0
   }
 }

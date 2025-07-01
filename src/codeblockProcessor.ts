@@ -1,14 +1,10 @@
 import { moment, TFile } from 'obsidian'
 import GooglePhotos from './main'
-import { GridView } from './renderer'
-import { dateToGoogleDateFilter } from './photosApi'
 
 export default class CodeblockProcessor {
   plugin: GooglePhotos
   source: string
   parentEl: HTMLElement
-  title: string
-  searchParams: object
   note: TFile
   noteDate: moment.Moment
 
@@ -25,18 +21,19 @@ export default class CodeblockProcessor {
   parseContents () {
     // Process the codeblock contents
     const source = this.source.trim()
+    
+    // Create a helpful notice for all deprecated codeblock types
+    this.createDeprecationNotice()
+    
     if (!source) {
       return
     }
+    
     if (source === 'today') {
-      // Show a message that this feature is no longer available
-      this.message('⚠️ "Today" photo filtering is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
-      this.createPickerButton()
+      this.showDeprecatedFeature('"Today" photo filtering')
       return
     } else if (source === 'notedate') {
-      // Show a message that this feature is no longer available
-      this.message('⚠️ Note date photo filtering is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
-      this.createPickerButton()
+      this.showDeprecatedFeature('Note date photo filtering')
       return
     } else {
       // Attempt to parse a JSON object containing a Photos API search query
@@ -46,46 +43,28 @@ export default class CodeblockProcessor {
       }
       try {
         params = JSON.parse(this.source)
+        this.showDeprecatedFeature('Photo search queries')
+        return
       } catch (e) {
         // Unable to parse codeblock contents
-        console.log(e)
-        this.message('⚠️ Unable to parse codeblock contents. Photo search is no longer supported with the new Google Photos API.')
-        this.createPickerButton()
-        return
-      }
-      if (params.query) {
-        // This is the new object format which contains additional keys for our use
-        this.title = params.title || ''
-        this.message('⚠️ Photo search and album display is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
-        this.createPickerButton()
-        return
-      } else {
-        // The correct way to write the JSON is with a 'query' param containing the Google search params.
-        // We fall back to using the full object for legacy compatibility.
-        this.message('⚠️ Photo search is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
-        this.createPickerButton()
+        this.showDeprecatedFeature('Photo search')
         return
       }
     }
   }
 
-  createPickerButton () {
-    const buttonEl = this.parentEl.createEl('button', {
-      text: 'Open Photo Picker',
-      cls: 'mod-cta google-photos-picker-btn'
+  createDeprecationNotice () {
+    const noticeEl = this.parentEl.createEl('div', { cls: 'google-photos-warning' })
+    noticeEl.createEl('p', { 
+      text: '📋 Google Photos codeblock queries are no longer supported due to API changes.' 
     })
-    
-    buttonEl.onclick = () => {
-      // We'll need to import PickerModal here, but for now let's use a workaround
-      // This would normally trigger the picker modal
-      console.log('Photo picker button clicked - this would open the picker modal')
-      // TODO: Implement picker modal trigger from codeblock
-    }
+    noticeEl.createEl('p', { 
+      text: '💡 Use the "Insert Google Photo" command instead to manually select photos via the Google Photos picker.' 
+    })
   }
 
-  createGrid () {
-    // This method is no longer used with the Picker API
-    this.message('⚠️ Grid view is no longer supported with the new Google Photos API.')
+  showDeprecatedFeature (featureName: string) {
+    this.message(`⚠️ ${featureName} is no longer supported with the new Google Photos API.`)
   }
 
   message (text: string) {
