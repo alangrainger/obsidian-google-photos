@@ -1,4 +1,4 @@
-import { moment, Notice } from 'obsidian'
+import { moment, Notice, requestUrl } from 'obsidian'
 import GooglePhotos from './main'
 import { Moment } from 'moment'
 import { GooglePhotosMediaItem, GooglePhotosSearchParams } from 'photosApi'
@@ -53,23 +53,84 @@ export default class Renderer {
    * @param {array} thumbnails
    * @param {function} onclick
    */
-  appendThumbnailsToElement (el: HTMLElement, thumbnails: GooglePhotosMediaItem[], onclick: (event: MouseEvent) => void) {
-    (thumbnails || []).forEach((mediaItem: GooglePhotosMediaItem) => {
+  async appendThumbnailsToElement (el: HTMLElement, thumbnails: GooglePhotosMediaItem[], onclick: (event: MouseEvent) => void) {
+    for (const mediaItem of thumbnails || []) {
       // Image element
       const img = new ThumbnailImage()
       const settings = this.plugin.settings
-      img.src = mediaItem.baseUrl + '=w500-h130'
-      img.photoId = mediaItem.id
-      img.baseUrl = mediaItem.baseUrl
-      img.productUrl = mediaItem.productUrl
-      img.description = mediaItem.description // Optional caption
-      img.creationTime = moment(mediaItem.mediaMetadata.creationTime)
-      img.filename = img.creationTime.format(settings.filename)
-      img.onclick = onclick
-      img.classList.add('google-photos-grid-thumbnail')
-      // Output to Obsidian
-      el.appendChild(img)
-    })
+      
+      // For Picker API, we need to fetch the image with authentication and create a blob URL
+      try {
+        const imageUrl = mediaItem.baseUrl + '=w500-h130'
+        console.log(`Fetching authenticated image: ${imageUrl}`)
+        
+        // Create a placeholder image while loading
+        img.src = 'data:image/svg+xml;base64,' + btoa(`
+          <svg width="500" height="130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="130" fill="#f0f0f0"/>
+            <text x="250" y="70" text-anchor="middle" fill="#666" font-family="Arial" font-size="14">Loading...</text>
+          </svg>
+        `)
+        
+        // Set other properties immediately
+        img.photoId = mediaItem.id
+        img.baseUrl = mediaItem.baseUrl
+        img.productUrl = mediaItem.productUrl
+        img.description = mediaItem.description // Optional caption
+        img.creationTime = moment(mediaItem.mediaMetadata.creationTime)
+        img.filename = img.creationTime.format(settings.filename)
+        img.onclick = onclick
+        img.classList.add('google-photos-grid-thumbnail')
+        
+        // Add to DOM first so user sees the placeholder
+        el.appendChild(img)
+        
+        // Fetch the actual image with authentication
+        // Picker API requires OAuth authorization header
+        const s = this.plugin.settings
+        const imageData = await requestUrl({ 
+          url: imageUrl,
+          headers: {
+            'Authorization': 'Bearer ' + s.accessToken
+          }
+        })
+        const blob = new Blob([imageData.arrayBuffer], { type: 'image/jpeg' })
+        const blobUrl = URL.createObjectURL(blob)
+        
+        // Replace placeholder with actual image
+        img.src = blobUrl
+        
+        // Clean up blob URL when image is no longer needed
+        img.onload = () => {
+          // Keep blob URL for now - it will be cleaned up when modal closes
+        }
+        
+        console.log(`Successfully loaded authenticated image for: ${mediaItem.id}`)
+        
+      } catch (error) {
+        console.error(`Failed to load image for ${mediaItem.id}:`, error)
+        // Set a fallback error image
+        img.src = 'data:image/svg+xml;base64,' + btoa(`
+          <svg width="500" height="130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="130" fill="#ffebee"/>
+            <text x="250" y="70" text-anchor="middle" fill="#c62828" font-family="Arial" font-size="12">Failed to load image</text>
+          </svg>
+        `)
+        
+        // Still set the properties so the click handler works
+        img.photoId = mediaItem.id
+        img.baseUrl = mediaItem.baseUrl
+        img.productUrl = mediaItem.productUrl
+        img.description = mediaItem.description
+        img.creationTime = moment(mediaItem.mediaMetadata.creationTime)
+        img.filename = img.creationTime.format(settings.filename)
+        img.onclick = onclick
+        img.classList.add('google-photos-grid-thumbnail')
+        
+        // Add to DOM
+        el.appendChild(img)
+      }
+    }
   }
 }
 
@@ -173,7 +234,7 @@ export class GridView extends Renderer {
         if (this.nextPageToken) Object.assign(localOptions, { pageToken: this.nextPageToken })
         const searchResult = await this.plugin.photosApi.mediaItemsSearch(localOptions)
         if (searchResult.mediaItems) {
-          this.appendThumbnailsToElement(targetEl, searchResult.mediaItems, event => this.onThumbnailClick(event))
+          await this.appendThumbnailsToElement(targetEl, searchResult.mediaItems, event => this.onThumbnailClick(event))
         } else if (!targetEl.childElementCount) {
           targetEl.createEl('p', {
             text: 'No photos found for this query.'

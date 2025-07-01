@@ -72,6 +72,21 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
       .setName('Photos API')
       .setHeading()
 
+    /*
+     API Update Notice
+     */
+    new Setting(containerEl)
+      .setDesc('⚠️ Google has updated their Photos API. This plugin now uses the new Picker API which has some limitations compared to the previous version.')
+      .setClass('google-photos-api-notice')
+
+    /*
+     Limitations Notice
+     */
+    new Setting(containerEl)
+      .setName('Important Changes')
+      .setDesc('• Date filtering (daily photos, note date) is no longer available\n• Album browsing is no longer supported\n• Users must manually select photos through Google Photos picker\n• Codeblock queries no longer work - use the picker instead')
+      .setClass('google-photos-limitations')
+
     /**
      * Show or hide a setting item
      * @param {Setting} setting
@@ -122,7 +137,7 @@ export class GooglePhotosSettingTab extends PluginSettingTab {
         setting.descEl.appendText(' for instructions on how to get this value.')
       })
     new Setting(containerEl)
-      .setDesc('Google Photos will automatically authenticate you when you start using the plugin. You can also manually initiate the authentication process by clicking this button.')
+      .setDesc('Google Photos will automatically authenticate you when you start using the plugin. You can also manually initiate the authentication process by clicking this button. Note: You will need to re-authenticate due to the API changes.')
       .addButton(btn => btn
         .setButtonText('Open Photos API auth')
         .setCta()

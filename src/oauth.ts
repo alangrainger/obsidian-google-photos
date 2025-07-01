@@ -72,7 +72,7 @@ export default class OAuth {
   startAuthProcess () {
     const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
     url.search = new URLSearchParams({
-      scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+      scope: 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
       include_granted_scopes: 'true',
       response_type: 'code',
       access_type: 'offline',

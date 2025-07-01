@@ -2,7 +2,7 @@ import { MarkdownView, Plugin, Editor, moment, TFile, Notice } from 'obsidian'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
-import { DailyPhotosModal } from './photoModal'
+import { PickerModal } from './photoModal'
 import AlbumSuggest from './suggesters/AlbumSuggest'
 import CodeblockProcessor from './codeblockProcessor'
 
@@ -45,27 +45,19 @@ export default class GooglePhotos extends Plugin {
       editorCallback: (editor: Editor, view: MarkdownView) => {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new DailyPhotosModal(this.app, this, editor, view).open()
+          new PickerModal(this.app, this, editor, view).open()
         }
       }
     })
 
     this.addCommand({
       id: 'insert-album',
-      name: 'Insert album',
+      name: 'Insert album (Deprecated)',
       editorCallback: async (editor: Editor) => {
+        new Notice('⚠️ Album browsing is no longer supported with the new Google Photos API. Please use the photo picker instead.')
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new AlbumSuggest(this).show(album => {
-            const searchJson = JSON.stringify({
-              title: album.title,
-              query: {
-                albumId: album.id
-              }
-            })
-            const codeblock = '\n```photos\n' + searchJson + '\n```\n'
-            editor.replaceRange(codeblock, editor.getCursor())
-          })
+          new PickerModal(this.app, this, editor, markdownView).open()
         }
       }
     })

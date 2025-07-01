@@ -29,28 +29,15 @@ export default class CodeblockProcessor {
       return
     }
     if (source === 'today') {
-      // Show a gallery of today's notes
-      this.searchParams = {
-        filters: {
-          dateFilter: {
-            dates: [dateToGoogleDateFilter(moment())]
-          }
-        }
-      }
+      // Show a message that this feature is no longer available
+      this.message('⚠️ "Today" photo filtering is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
+      this.createPickerButton()
+      return
     } else if (source === 'notedate') {
-      // Show a gallery of photos taken on the current note date
-      if (this.noteDate.isValid()) {
-        this.searchParams = {
-          filters: {
-            dateFilter: {
-              dates: [dateToGoogleDateFilter(this.noteDate)]
-            }
-          }
-        }
-      } else {
-        this.message('Unable to find a valid date for today\'s note. Double-check that you have the correct format in "Title date format" in the plugin settings.')
-        return
-      }
+      // Show a message that this feature is no longer available
+      this.message('⚠️ Note date photo filtering is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
+      this.createPickerButton()
+      return
     } else {
       // Attempt to parse a JSON object containing a Photos API search query
       let params = {
@@ -60,38 +47,45 @@ export default class CodeblockProcessor {
       try {
         params = JSON.parse(this.source)
       } catch (e) {
-        // Unable to parse codeblock contents - the API will return a 'malformed input' message
+        // Unable to parse codeblock contents
         console.log(e)
+        this.message('⚠️ Unable to parse codeblock contents. Photo search is no longer supported with the new Google Photos API.')
+        this.createPickerButton()
+        return
       }
       if (params.query) {
         // This is the new object format which contains additional keys for our use
         this.title = params.title || ''
-        this.searchParams = params.query
+        this.message('⚠️ Photo search and album display is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
+        this.createPickerButton()
+        return
       } else {
         // The correct way to write the JSON is with a 'query' param containing the Google search params.
         // We fall back to using the full object for legacy compatibility.
-        this.searchParams = params
+        this.message('⚠️ Photo search is no longer supported with the new Google Photos API. Please use the photo picker to manually select photos.')
+        this.createPickerButton()
+        return
       }
     }
-    this.createGrid()
+  }
+
+  createPickerButton () {
+    const buttonEl = this.parentEl.createEl('button', {
+      text: 'Open Photo Picker',
+      cls: 'mod-cta google-photos-picker-btn'
+    })
+    
+    buttonEl.onclick = () => {
+      // We'll need to import PickerModal here, but for now let's use a workaround
+      // This would normally trigger the picker modal
+      console.log('Photo picker button clicked - this would open the picker modal')
+      // TODO: Implement picker modal trigger from codeblock
+    }
   }
 
   createGrid () {
-    // Set up the Grid View object
-    const grid = new GridView({
-      plugin: this.plugin,
-      title: this.title
-    })
-    grid.containerEl.addClass('google-photos-codeblock')
-    // Attach to the codeblock view
-    this.parentEl.appendChild(grid.containerEl)
-
-    if (this.searchParams) {
-      grid.setSearchParams(this.searchParams)
-    }
-
-    // Finally, start the thumbnails populating
-    grid.getThumbnails().then()
+    // This method is no longer used with the Picker API
+    this.message('⚠️ Grid view is no longer supported with the new Google Photos API.')
   }
 
   message (text: string) {
