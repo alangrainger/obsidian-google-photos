@@ -1,46 +1,6 @@
 import { moment } from 'obsidian'
 import GooglePhotos from './main'
 
-export type GooglePhotosDate = {
-  year: number;
-  month: number;
-  day: number;
-}
-
-// https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search#DateFilter
-export type GooglePhotosDateFilter = {
-  dates?: Array<GooglePhotosDate>;
-  ranges?: {
-    startDate: GooglePhotosDate;
-    endDate: GooglePhotosDate;
-  }
-}
-
-export type GooglePhotosSearchParams = {
-  method?: string,
-  body?: string,
-  filters?: {
-    dateFilter?: GooglePhotosDateFilter
-  }
-}
-
-export type GooglePhotosAlbum = {
-  id: string,
-  title: string,
-  productUrl: string,
-  isWriteable: boolean,
-  isSharedAlbum?: boolean,
-  mediaItemsCount: string,
-  coverPhotoBaseUrl: string,
-  coverPhotoMediaItemId: string
-}
-
-export type GooglePhotosAlbumSearch = {
-  albums: GooglePhotosAlbum[],
-  sharedAlbums: GooglePhotosAlbum[],
-  nextPageToken: string
-}
-
 export type GooglePhotosMediaItem = {
   id: string,
   description: string,
@@ -53,9 +13,33 @@ export type GooglePhotosMediaItem = {
   filename: string
 }
 
-export type GooglePhotosMediaItemsSearch = {
-  mediaItems: GooglePhotosMediaItem[],
-  nextPageToken: string
+// Picker API types
+export type PickerSession = {
+  id: string,
+  pickerUri: string,
+  pollingConfig: {
+    pollInterval: string,
+    timeoutIn: string
+  },
+  mediaItemsSet: boolean
+}
+
+export type PickedMediaItem = {
+  id: string,
+  mediaFile: {
+    baseUrl: string,
+    mimeType: string,
+    filename: string
+  },
+  description?: string,
+  mediaMetadata?: {
+    creationTime: string
+  }
+}
+
+export type PickedMediaItemsResponse = {
+  mediaItems: PickedMediaItem[],
+  nextPageToken?: string
 }
 
 export default class PhotosApi {
@@ -66,7 +50,7 @@ export default class PhotosApi {
   }
 
   /**
-   * Make an authenticated request to Google Photos API
+   * Make an authenticated request to Google Photos Picker API
    *
    * @param {string} endpoint - Endpoint including the API version: '/v1' etc
    * @param {object} [params] - Optional parameters
@@ -74,7 +58,7 @@ export default class PhotosApi {
    *
    * @throws Will throw an error if the input is malformed, or if the user is not authenticated
    */
-  async request (endpoint: string, params: GooglePhotosSearchParams = {}): Promise<object> {
+  async request (endpoint: string, params: any = {}): Promise<object> {
     // Check to make sure we have a valid access token
     const s = this.plugin.settings
     if (!s.accessToken || moment() > moment(s.expires)) {
@@ -83,76 +67,122 @@ export default class PhotosApi {
       }
     }
 
-    // Make the authenticated request to Photos API
+    console.log(`Making request to: https://photospicker.googleapis.com${endpoint}`)
+    console.log('Request params:', params)
+
+    // Make the authenticated request to Photos Picker API
     const resp = await fetch(
       'https://photospicker.googleapis.com' + endpoint,
       Object.assign({
-        method: 'POST',
+        method: 'GET',
         headers: {
           Authorization: 'Bearer ' + s.accessToken,
           'Content-Type': 'application/json'
         }
       }, params))
+      
+    console.log(`Response status: ${resp.status}`)
+    
     if (resp.status === 200) {
-      return resp.json()
+      const data = await resp.json()
+      console.log('Response data:', data)
+      return data
     } else if (resp.status === 400) { // Malformed input
-      throw new Error('⚠ Malformed input. Please check the filters you are using.')
+      const errorText = await resp.text()
+      console.error('400 error response:', errorText)
+      throw new Error('⚠ Malformed input. Please check the request.')
     } else if (resp.status === 401) { // Unauthenticated
+      console.log('401 error - attempting re-authentication')
       if (await this.plugin.oauth.authenticate()) {
         throw new Error('Retry')
       } else {
         throw new Error('Unauthenticated')
       }
+    } else if (resp.status === 403) { // Permission denied
+      const errorText = await resp.text()
+      console.error('403 error response:', errorText)
+      throw new Error('Permission denied. Please re-authenticate with Google Photos.')
     } else {
+      const errorText = await resp.text()
+      console.error(`${resp.status} error response:`, errorText)
       throw new Error('Unknown status ' + resp.status)
     }
   }
 
   /**
-   * Perform a mediaItems search
-   * https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
-   *
-   * @param {object} options
-   * @returns {Promise<GooglePhotosMediaItemsSearch>}
+   * Create a new picker session
+   * @returns {Promise<PickerSession>}
    */
-  async mediaItemsSearch (options: object = {}): Promise<GooglePhotosMediaItemsSearch> {
-    return await this.request('/v1/mediaItems:search', {
+  async createSession (): Promise<PickerSession> {
+    console.log('Creating new picker session...')
+    return await this.request('/v1/sessions', {
       method: 'POST',
-      body: JSON.stringify(options)
-    }) as unknown as GooglePhotosMediaItemsSearch
+      body: JSON.stringify({}) // Empty body for session creation
+    }) as PickerSession
   }
 
-  async listAlbums (): Promise<GooglePhotosAlbumSearch> {
-    // Get the user's own albums
-    const albums = await this.request('/v1/albums?pageSize=50', {
-      method: 'GET'
-    }) as unknown as GooglePhotosAlbumSearch
+  /**
+   * Get session status
+   * @param {string} sessionId
+   * @returns {Promise<PickerSession>}
+   */
+  async getSession (sessionId: string): Promise<PickerSession> {
+    console.log(`Getting session status for: ${sessionId}`)
+    return await this.request(`/v1/sessions/${sessionId}`) as PickerSession
+  }
 
-    // Get shared albums. This includes BOTH albums owned by the user which have been shared with others,
-    // and also albums owned by others which have been shared to this user.
-    const sharedAlbums = await this.request('/v1/sharedAlbums?pageSize=50', {
-      method: 'GET'
-    }) as unknown as GooglePhotosAlbumSearch
-    if (sharedAlbums?.sharedAlbums) {
-      for (const sharedAlbum of sharedAlbums.sharedAlbums) {
-        // Check to see if this album is already present in the normal albums list
-        // (i.e. it is an album created by the user)
-        if (sharedAlbum.title && !albums.albums.find(album => album.id === sharedAlbum.id)) {
-          // Add it to the albums list
-          sharedAlbum.isSharedAlbum = true
-          albums.albums.push(sharedAlbum)
-        }
-      }
+  /**
+   * List picked media items from a session
+   * @param {string} sessionId
+   * @param {string} [pageToken]
+   * @returns {Promise<PickedMediaItemsResponse>}
+   */
+  async listPickedMediaItems (sessionId: string, pageToken?: string): Promise<PickedMediaItemsResponse> {
+    console.log(`Listing picked media items for session: ${sessionId}`)
+    let url = `/v1/mediaItems?sessionId=${sessionId}`
+    if (pageToken) {
+      url += `&pageToken=${pageToken}`
     }
-
-    return albums
+    return await this.request(url) as PickedMediaItemsResponse
   }
-}
 
-export function dateToGoogleDateFilter (date: moment.Moment) {
-  return {
-    year: +date.format('YYYY') || 0,
-    month: +date.format('M') || 0,
-    day: +date.format('D') || 0
+  /**
+   * Delete a session (cleanup)
+   * @param {string} sessionId
+   */
+  async deleteSession (sessionId: string): Promise<void> {
+    console.log(`Deleting session: ${sessionId}`)
+    await this.request(`/v1/sessions/${sessionId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  /**
+   * Convert PickedMediaItem to GooglePhotosMediaItem for compatibility
+   * @param {any} pickedItem - Using any since API structure may vary
+   * @returns {GooglePhotosMediaItem}
+   */
+  convertPickedMediaItem (pickedItem: any): GooglePhotosMediaItem {
+    console.log('Converting picked media item:', pickedItem)
+    
+    // Handle different possible structures from the API
+    const baseUrl = pickedItem.mediaFile?.baseUrl || pickedItem.baseUrl || ''
+    const mimeType = pickedItem.mediaFile?.mimeType || pickedItem.mimeType || 'image/jpeg'
+    const filename = pickedItem.mediaFile?.filename || pickedItem.filename || `photo-${pickedItem.id}.jpg`
+    
+    const converted = {
+      id: pickedItem.id,
+      description: pickedItem.description || '',
+      productUrl: '', // Not available in Picker API
+      baseUrl: baseUrl,
+      mimeType: mimeType,
+      mediaMetadata: {
+        creationTime: pickedItem.mediaMetadata?.creationTime || moment().toISOString()
+      },
+      filename: filename
+    }
+    
+    console.log('Converted media item:', converted)
+    return converted
   }
 }

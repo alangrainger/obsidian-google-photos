@@ -2,8 +2,7 @@ import { MarkdownView, Plugin, Editor, moment, TFile, Notice } from 'obsidian'
 import PhotosApi from './photosApi'
 import OAuth from './oauth'
 import { GooglePhotosSettingTab, GooglePhotosSettings, DEFAULT_SETTINGS, GetDateFromOptions } from './settings'
-import { DailyPhotosModal } from './photoModal'
-import AlbumSuggest from './suggesters/AlbumSuggest'
+import { PickerModal } from './photoModal'
 import CodeblockProcessor from './codeblockProcessor'
 
 export default class GooglePhotos extends Plugin {
@@ -45,27 +44,7 @@ export default class GooglePhotos extends Plugin {
       editorCallback: (editor: Editor, view: MarkdownView) => {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
         if (markdownView) {
-          new DailyPhotosModal(this.app, this, editor, view).open()
-        }
-      }
-    })
-
-    this.addCommand({
-      id: 'insert-album',
-      name: 'Insert album',
-      editorCallback: async (editor: Editor) => {
-        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)
-        if (markdownView) {
-          new AlbumSuggest(this).show(album => {
-            const searchJson = JSON.stringify({
-              title: album.title,
-              query: {
-                albumId: album.id
-              }
-            })
-            const codeblock = '\n```photos\n' + searchJson + '\n```\n'
-            editor.replaceRange(codeblock, editor.getCursor())
-          })
+          new PickerModal(this.app, this, editor, view).open()
         }
       }
     })
@@ -86,6 +65,7 @@ export default class GooglePhotos extends Plugin {
 
   /**
    * Gets the date from the note title, front matter, or returns today based on user setting
+   * This is kept for compatibility with existing settings but is no longer used for photo filtering
    * @param file
    */
   getNoteDate (file: TFile): moment.Moment {

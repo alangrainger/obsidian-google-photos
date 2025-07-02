@@ -28,3 +28,84 @@
     margin-block-start: var(--p-spacing);
     margin-block-end: var(--p-spacing);
 }
+
+/* Original styles */
+.google-photos-modal-grid .modal {
+  width: calc(100vw - 50px);
+  height: calc(100vh - 50px);
+  max-width: calc(100vw - 50px);
+  max-height: calc(100vh - 50px);
+}
+
+.google-photos-fit-content .setting-item-control {
+  min-width: fit-content;
+}
+
+.google-photos-codeblock img {
+  cursor: pointer;
+}
+
+/* New styles for Picker API interface */
+.google-photos-warning {
+  background-color: var(--background-modifier-error);
+  border: 1px solid var(--color-red);
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.google-photos-warning p {
+  margin: 0.5rem 0;
+  color: var(--text-normal);
+}
+
+.google-photos-btn-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.google-photos-btn-container button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--interactive-accent);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+}
+
+.google-photos-btn-container button:not(.mod-cta) {
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  border-color: var(--interactive-normal);
+}
+
+.google-photos-btn-container button:hover {
+  background: var(--interactive-hover);
+}
+
+.google-photos-btn-container button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.google-photos-picker-btn {
+  margin: 1rem 0;
+}
+
+/* Settings styles */
+.google-photos-api-notice .setting-item-description {
+  color: var(--text-warning);
+  font-weight: 500;
+}
+
+.google-photos-limitations .setting-item-description {
+  white-space: pre-line;
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.google-photos-limitations .setting-item-name {
+  color: var(--text-warning);
+  font-weight: 500;
+}

@@ -1,14 +1,10 @@
 import { moment, TFile } from 'obsidian'
 import GooglePhotos from './main'
-import { GridView } from './renderer'
-import { dateToGoogleDateFilter } from './photosApi'
 
 export default class CodeblockProcessor {
   plugin: GooglePhotos
   source: string
   parentEl: HTMLElement
-  title: string
-  searchParams: object
   note: TFile
   noteDate: moment.Moment
 
@@ -25,32 +21,20 @@ export default class CodeblockProcessor {
   parseContents () {
     // Process the codeblock contents
     const source = this.source.trim()
+    
+    // Create a helpful notice for all deprecated codeblock types
+    this.createDeprecationNotice()
+    
     if (!source) {
       return
     }
+    
     if (source === 'today') {
-      // Show a gallery of today's notes
-      this.searchParams = {
-        filters: {
-          dateFilter: {
-            dates: [dateToGoogleDateFilter(moment())]
-          }
-        }
-      }
+      this.showDeprecatedFeature('"Today" photo filtering')
+      return
     } else if (source === 'notedate') {
-      // Show a gallery of photos taken on the current note date
-      if (this.noteDate.isValid()) {
-        this.searchParams = {
-          filters: {
-            dateFilter: {
-              dates: [dateToGoogleDateFilter(this.noteDate)]
-            }
-          }
-        }
-      } else {
-        this.message('Unable to find a valid date for today\'s note. Double-check that you have the correct format in "Title date format" in the plugin settings.')
-        return
-      }
+      this.showDeprecatedFeature('Note date photo filtering')
+      return
     } else {
       // Attempt to parse a JSON object containing a Photos API search query
       let params = {
@@ -59,39 +43,28 @@ export default class CodeblockProcessor {
       }
       try {
         params = JSON.parse(this.source)
+        this.showDeprecatedFeature('Photo search queries')
+        return
       } catch (e) {
-        // Unable to parse codeblock contents - the API will return a 'malformed input' message
-        console.log(e)
-      }
-      if (params.query) {
-        // This is the new object format which contains additional keys for our use
-        this.title = params.title || ''
-        this.searchParams = params.query
-      } else {
-        // The correct way to write the JSON is with a 'query' param containing the Google search params.
-        // We fall back to using the full object for legacy compatibility.
-        this.searchParams = params
+        // Unable to parse codeblock contents
+        this.showDeprecatedFeature('Photo search')
+        return
       }
     }
-    this.createGrid()
   }
 
-  createGrid () {
-    // Set up the Grid View object
-    const grid = new GridView({
-      plugin: this.plugin,
-      title: this.title
+  createDeprecationNotice () {
+    const noticeEl = this.parentEl.createEl('div', { cls: 'google-photos-warning' })
+    noticeEl.createEl('p', { 
+      text: '📋 Google Photos codeblock queries are no longer supported due to API changes.' 
     })
-    grid.containerEl.addClass('google-photos-codeblock')
-    // Attach to the codeblock view
-    this.parentEl.appendChild(grid.containerEl)
+    noticeEl.createEl('p', { 
+      text: '💡 Use the "Insert Google Photo" command instead to manually select photos via the Google Photos picker.' 
+    })
+  }
 
-    if (this.searchParams) {
-      grid.setSearchParams(this.searchParams)
-    }
-
-    // Finally, start the thumbnails populating
-    grid.getThumbnails().then()
+  showDeprecatedFeature (featureName: string) {
+    this.message(`⚠️ ${featureName} is no longer supported with the new Google Photos API.`)
   }
 
   message (text: string) {

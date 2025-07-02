@@ -6,15 +6,12 @@ import {
   moment,
   Notice,
   Platform,
-  requestUrl,
-  Setting,
-  ToggleComponent
+  requestUrl
 } from 'obsidian'
 import { GridView, ThumbnailImage } from './renderer'
 import GooglePhotos from './main'
 import { handlebarParse } from './handlebars'
-import Litepicker from 'litepicker'
-import { dateToGoogleDateFilter, GooglePhotosDateFilter } from 'photosApi'
+import { PickerSession } from 'photosApi'
 
 export class PhotosModal extends Modal {
   plugin: GooglePhotos
@@ -64,7 +61,14 @@ export class PhotosModal extends Modal {
         await vault.createFolder(thumbnailFolder)
       }
       // Fetch the thumbnail from Google Photos
-      const imageData = await requestUrl({ url: src })
+      // Picker API requires OAuth authorization header
+      const s = this.plugin.settings
+      const imageData = await requestUrl({ 
+        url: src,
+        headers: {
+          'Authorization': 'Bearer ' + s.accessToken
+        }
+      })
       await this.view.app.vault.adapter.writeBinary(thumbnailFolder + '/' + thumbnailImage.filename, imageData.arrayBuffer)
       const cursorPosition = this.editor.getCursor()
       const linkText = handlebarParse(this.plugin.settings.thumbnailMarkdown, {
@@ -89,117 +93,192 @@ export class PhotosModal extends Modal {
   }
 }
 
-export class DailyPhotosModal extends PhotosModal {
-  noteDate: moment.Moment
-  limitPhotosToNoteDate = false
-  dateSetting: Setting
-  dateToggle: ToggleComponent
-
-  /**
-   * Update the human-readable date toggle text
-   */
-  updateDateText () {
-    let rangeText = ''
-    if (this.plugin.settings.showPhotosInDateRange) {
-      const range = []
-      if (this.plugin.settings.showPhotosXDaysPast) range.push('-' + this.plugin.settings.showPhotosXDaysPast)
-      if (this.plugin.settings.showPhotosXDaysFuture) range.push('+' + this.plugin.settings.showPhotosXDaysFuture)
-      rangeText = ' (' + range.join('/') + ' days)'
-    }
-    this.dateSetting?.setName(`Limit photos to ${this.noteDate.format('dddd, MMMM D')} 📅` + rangeText)
-  }
-
-  /**
-   * Update the date filter (if needed) and reset the photo grid
-   */
-  async updateView () {
-    if (this.limitPhotosToNoteDate) {
-      let dateFilter: GooglePhotosDateFilter = {
-        dates: [dateToGoogleDateFilter(this.noteDate)]
-      }
-      if (this.plugin.settings.showPhotosInDateRange) {
-        // Determine the date range to show photos in
-        const xDaysBeforeDate = moment(this.noteDate).subtract(this.plugin.settings.showPhotosXDaysPast, 'days')
-        const xDaysAfterDate = moment(this.noteDate).add(this.plugin.settings.showPhotosXDaysFuture, 'days')
-        dateFilter = {
-          ranges: [{
-            startDate: dateToGoogleDateFilter(xDaysBeforeDate),
-            endDate: dateToGoogleDateFilter(xDaysAfterDate)
-          }]
-        } as object
-      }
-      this.updateDateText()
-      this.gridView.setSearchParams({
-        filters: {
-          dateFilter
-        }
-      })
-    } else {
-      this.gridView.clearSearchParams()
-    }
-    await this.gridView.resetGrid()
-    this.gridView.getThumbnails().then()
-  }
+export class PickerModal extends PhotosModal {
+  session: PickerSession | null = null
+  pollingInterval: NodeJS.Timeout | null = null
+  pickerWindow: Window | null = null
 
   async onOpen () {
     const { contentEl, modalEl } = this
+    
     if (Platform.isDesktop) {
-      // Resize to fit the viewport width on desktop
       modalEl.addClass('google-photos-modal-grid')
     }
-    this.gridView = new GridView({
-      scrollEl: modalEl,
-      plugin: this.plugin,
-      onThumbnailClick: event => this.insertImageIntoEditor(event)
-    })
 
-    // Check for a valid date from the note title
-    this.noteDate = this.plugin.getNoteDate(this.view.file)
-    if (this.noteDate.isValid()) {
-      // The currently open note has a parsable date
-      if (this.plugin.settings.defaultToDailyPhotos) {
-        // Set the default view to show photos from today
-        this.limitPhotosToNoteDate = true
+    // Show loading message
+    contentEl.createEl('h2', { text: 'Google Photos Picker' })
+    const statusEl = contentEl.createEl('p', { text: 'Initializing photo picker...' })
+    const pickerEl = contentEl.createEl('div')
+
+    try {
+      // Create picker session
+      console.log('Creating picker session...')
+      this.session = await this.plugin.photosApi.createSession()
+      console.log('Session created:', this.session)
+      
+      statusEl.setText('Click the button below to open Google Photos and select your photos:')
+      
+      const openPickerBtn = pickerEl.createEl('button', {
+        text: 'Open Google Photos Picker',
+        cls: 'mod-cta'
+      })
+      
+      openPickerBtn.onclick = () => {
+        if (this.session) {
+          console.log('Opening picker with URI:', this.session.pickerUri)
+          // Open picker in new window/tab
+          this.pickerWindow = window.open(this.session.pickerUri, '_blank')
+          openPickerBtn.disabled = true
+          openPickerBtn.setText('Waiting for photo selection...')
+          statusEl.setText('Select your photos in the Google Photos window, then return here. This window will automatically detect when you\'re done.')
+          
+          // Start polling for completion
+          this.startPolling(statusEl)
+        }
       }
-    } else {
-      new Notice(`Unable to parse date from ${lowerCaseFirstLetter(this.plugin.settings.getDateFrom)} with format ${this.plugin.settings.getDateFromFormat}. Using today's date instead.`)
-      // Set to today's date if there is no note date
-      this.noteDate = moment()
+      
+    } catch (error) {
+      console.error('Failed to create picker session:', error)
+      statusEl.setText('Error: ' + error.message)
+    }
+  }
+
+  startPolling (statusEl: HTMLParagraphElement) {
+    if (!this.session) return
+
+    console.log('Starting polling for session:', this.session.id)
+    let pollCount = 0
+    
+    const poll = async () => {
+      try {
+        pollCount++
+        console.log(`Poll attempt ${pollCount} for session ${this.session!.id}`)
+        
+        const sessionStatus = await this.plugin.photosApi.getSession(this.session!.id)
+        console.log('Session status:', sessionStatus)
+        
+        if (sessionStatus.mediaItemsSet) {
+          // User has finished selecting photos
+          console.log('Media items set detected, stopping polling')
+          this.stopPolling()
+          statusEl.setText('Photos selected! Loading...')
+          await this.displaySelectedPhotos()
+        } else {
+          // Continue polling
+          console.log('Media items not set yet, continuing to poll...')
+          const pollInterval = this.parseDuration(sessionStatus.pollingConfig?.pollInterval || '5s')
+          console.log(`Next poll in ${pollInterval}ms`)
+          statusEl.setText(`Waiting for photo selection... (checked ${pollCount} times)`)
+          this.pollingInterval = setTimeout(poll, pollInterval)
+        }
+      } catch (error) {
+        console.error('Polling error:', error)
+        this.stopPolling()
+        statusEl.setText('Error checking photo selection status: ' + error.message)
+        new Notice('Error checking photo selection status: ' + error.message)
+      }
     }
 
-    // Create the date picker
-    const datePicker = new Litepicker({
-      element: document.createElement('div'),
-      startDate: this.noteDate.format('YYYY-MM-DD')
-    })
-    datePicker.on('selected', date => {
-      this.noteDate = moment(date.format('YYYY-MM-DD'))
-      this.dateToggle.setValue(true)
-    })
+    // Start first poll after a short delay
+    console.log('Starting initial poll in 3 seconds...')
+    this.pollingInterval = setTimeout(poll, 3000)
+  }
 
-    // Create the checkbox to switch between date / all photos
-    new Setting(contentEl)
-      .setClass('google-photos-fit-content')
-      .addToggle(toggle => {
-        this.dateToggle = toggle
-        toggle
-          .setValue(this.limitPhotosToNoteDate)
-          .onChange(checked => {
-            this.limitPhotosToNoteDate = checked
-            this.updateView()
-          })
+  stopPolling () {
+    if (this.pollingInterval) {
+      clearTimeout(this.pollingInterval)
+      this.pollingInterval = null
+      console.log('Polling stopped')
+    }
+  }
+
+  parseDuration (duration: string): number {
+    // Parse duration string like "5s" or "30s" and return milliseconds
+    const match = duration.match(/^(\d+)s$/)
+    const seconds = match ? parseInt(match[1]) : 5
+    console.log(`Parsed duration "${duration}" as ${seconds} seconds`)
+    return seconds * 1000
+  }
+
+  async displaySelectedPhotos () {
+    if (!this.session) return
+
+    const { contentEl } = this
+    contentEl.empty()
+    
+    contentEl.createEl('h2', { text: 'Selected Photos' })
+    const statusEl = contentEl.createEl('p', { text: 'Loading selected photos...' })
+    
+    try {
+      console.log('Fetching picked media items for session:', this.session.id)
+      // Get picked media items
+      const mediaItemsResponse = await this.plugin.photosApi.listPickedMediaItems(this.session.id)
+      console.log('Media items response:', mediaItemsResponse)
+      
+      // Debug the condition check
+      console.log('mediaItemsResponse.mediaItems exists?', !!mediaItemsResponse.mediaItems)
+      console.log('mediaItemsResponse.mediaItems type:', typeof mediaItemsResponse.mediaItems)
+      console.log('mediaItemsResponse.mediaItems length:', mediaItemsResponse.mediaItems?.length)
+      console.log('Is array?', Array.isArray(mediaItemsResponse.mediaItems))
+      console.log('Length > 0?', (mediaItemsResponse.mediaItems?.length || 0) > 0)
+      
+      if (mediaItemsResponse.mediaItems && mediaItemsResponse.mediaItems.length > 0) {
+        console.log(`✅ Found ${mediaItemsResponse.mediaItems.length} selected photos`)
+        statusEl.setText(`Found ${mediaItemsResponse.mediaItems.length} selected photo(s). Click on a photo to insert it into your note:`)
+        
+        // Create grid view for selected photos
+        this.gridView = new GridView({
+          scrollEl: this.modalEl,
+          plugin: this.plugin,
+          onThumbnailClick: event => this.insertImageIntoEditor(event)
+        })
+
+        // Convert picked items to compatible format and display
+        const compatibleItems = mediaItemsResponse.mediaItems.map(item => 
+          this.plugin.photosApi.convertPickedMediaItem(item)
+        )
+        
+        console.log('Compatible items created:', compatibleItems)
+        
+        await this.gridView.appendThumbnailsToElement(
+          this.gridView.containerEl, 
+          compatibleItems, 
+          event => this.insertImageIntoEditor(event)
+        )
+        
+        contentEl.appendChild(this.gridView.containerEl)
+      } else {
+        console.log('❌ Condition failed - debugging why:')
+        console.log('- mediaItemsResponse.mediaItems:', mediaItemsResponse.mediaItems)
+        console.log('- Truthy check:', !!mediaItemsResponse.mediaItems)
+        console.log('- Length:', mediaItemsResponse.mediaItems?.length)
+        console.log('- Length > 0:', (mediaItemsResponse.mediaItems?.length || 0) > 0)
+        console.log('Full response:', mediaItemsResponse)
+        statusEl.setText('No photos were selected. You can close this window and try again.')
+      }
+      
+    } catch (error) {
+      console.error('Failed to load selected photos:', error)
+      statusEl.setText('Error loading selected photos: ' + error.message)
+    }
+  }
+
+  onClose () {
+    this.stopPolling()
+    
+    // Clean up session
+    if (this.session) {
+      this.plugin.photosApi.deleteSession(this.session.id).catch(error => {
+        console.error('Failed to delete session:', error)
       })
-      .then(setting => {
-        this.dateSetting = setting
-        this.updateDateText()
-        setting.nameEl.onclick = () => { datePicker.show(setting.nameEl) }
-      })
-
-    // Attach the grid view to the modal
-    contentEl.appendChild(this.gridView.containerEl)
-
-    // Start fetching thumbnails!
-    await this.updateView()
+    }
+    
+    // Close picker window if still open
+    if (this.pickerWindow && !this.pickerWindow.closed) {
+      this.pickerWindow.close()
+    }
+    
+    super.onClose()
   }
 }
 

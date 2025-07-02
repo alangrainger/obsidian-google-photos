@@ -1,6 +1,128 @@
-# 🚨 WARNING 🚨 <br>This plugin is non-functional until it can be updated to work with Google's new photo API. [See this issue for more details](https://github.com/alangrainger/obsidian-google-photos/issues/56).
-
 # Google Photos for Obsidian
+
+## ✅ Working with Google Photos Picker API
+
+This plugin has been successfully updated to work with Google's new Picker API after the Library API deprecation in March 2025.
+
+---
+
+A plugin to embed photos from Google Photos into your [Obsidian](https://obsidian.md/) notes using the Google Photos Picker.
+
+## Features
+
+- ✅ **Insert individual photos** using the Google Photos picker
+- ✅ **Automatically download and save thumbnails** locally  
+- ✅ **Link back to original photos** in Google Photos
+- ✅ **Customizable image templates** and filenames
+- ✅ **Flexible file organization** with configurable save locations
+
+## Important Changes Due to Google's API Updates
+
+**What's New:**
+- Uses Google's official Picker API for photo selection
+- Manual photo selection through Google Photos interface
+- Secure, user-controlled photo access
+
+**What's No Longer Available:**
+- ~~Date filtering (daily photos, note date queries)~~ - **Removed**
+- ~~Album browsing~~ - **Removed**  
+- ~~Automatic photo queries~~ - **Removed**
+- ~~Codeblock galleries~~ - **Removed**
+
+## How it works
+
+This plugin uses the Google Photos Picker API. When you want to insert photos:
+
+1. Run the "Insert Google Photo" command in Obsidian
+2. Click "Open Google Photos Picker" 
+3. Select your photos in the Google Photos interface
+4. Selected photos appear in Obsidian - click to insert them
+5. Plugin automatically downloads thumbnails and creates markdown links
+
+## Setup
+
+Follow the **[Picker API Setup Guide](docs/Setup-PickerAPI.md)** for detailed instructions on:
+- Creating a Google Cloud project
+- Enabling the Photos Library API
+- Configuring OAuth credentials
+- Setting up the plugin
+
+## Usage
+
+### Insert Photos
+
+1. Place your cursor where you want to insert a photo
+2. Open command palette (`Cmd/Ctrl + P`)
+3. Run **"Insert Google Photo"** 
+4. Click **"Open Google Photos Picker"**
+5. Select photos in Google Photos
+6. Click on any photo in the selection grid to insert it
+
+### Customize Markdown Output
+
+In Settings, you can customize the markdown template using these variables:
+
+```markdown
+[![]({{local_thumbnail_link}})]({{google_photo_url}}) 
+```
+
+Available variables:
+- `{{local_thumbnail_link}}` - Path to locally saved thumbnail
+- `{{google_photo_url}}` - URL to original Google Photo  
+- `{{google_photo_desc}}` - Photo description/caption
+- `{{taken_date}}` - Date photo was taken
+- `{{google_base_url}}` - Advanced: Direct image URL
+- `{{google_photo_id}}` - Advanced: Google's photo ID
+
+### File Organization
+
+Configure where thumbnails are saved:
+- **Same folder as note** - Keeps photos with your notes
+- **Subfolder** - Organizes photos in a dedicated subfolder  
+- **Specific folder** - Centralized photo storage location
+
+## Migration from Previous Version
+
+If you used this plugin before the API migration:
+
+1. **Re-authenticate** - You'll need to set up new API credentials
+2. **Replace codeblocks** - Remove old `````photos` codeblocks 
+3. **Update workflow** - Use manual picker instead of automatic queries
+
+Legacy codeblocks will show helpful migration messages.
+
+## Troubleshooting
+
+### Authentication Issues
+- Ensure you've added yourself as a test user in OAuth consent screen
+- Verify redirect URI is exactly: `http://localhost:51894/google-photos`
+- Clear browser cookies and try authentication again
+
+### Picker Not Opening  
+- Check that Google Photos Library API is enabled in your project
+- Verify your Client ID and Secret are correct
+- Check browser console for CORS or network errors
+
+### "Connection Refused" Error
+If localhost connection fails:
+1. Copy the error page URL
+2. Replace `http://localhost:51894/` with `obsidian://`
+3. Navigate to the modified URL to complete authentication
+
+## Development
+
+```bash
+npm install
+npm run build
+```
+
+## License
+
+GPL-3.0 license
+
+---
+
+**Note:** This plugin works with Google's current Picker API and should remain functional as long as Google maintains this API. The previous Library API limitations were imposed by Google's business decisions, not technical constraints.
 
 ![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
 
@@ -68,7 +190,7 @@ If you want to style or hide the title, the CSS class is `.google-photos-album-t
 Points of note:
 
 - It shows only your most recently used albums. This should be enough to get started, and I hope to update it in the future so it can fetch more of that list.
-- Clicking on the photos doesn’t do anything. I’d be interested to hear feedback on what it _should_ do, in an ideal world. Please [join the conversation here](https://github.com/alangrainger/obsidian-google-photos/issues/5).
+- Clicking on the photos doesn't do anything. I'd be interested to hear feedback on what it _should_ do, in an ideal world. Please [join the conversation here](https://github.com/alangrainger/obsidian-google-photos/issues/5).
 
 ## Codeblocks
 
@@ -78,21 +200,21 @@ You can use codeblocks to insert galleries of photos:
 
 This is especially useful to put in your daily note template, and it will show the photos just from that daily note date. You can configure the settings to fetch the date from the note title or a frontmatter property.
 
-````
+```
 ```photos
 notedate
 ```
-````
+```
 
 ### Photos from today
 
 This will show photos from today - the current live date.
 
-````
+```
 ```photos
 today
 ```
-````
+```
 
 ### Advanced codeblock usage
 
@@ -102,7 +224,7 @@ https://developers.google.com/photos/library/reference/rest/v1/mediaItems/search
 
 For example, if you wanted to show photos of food taken on every April 1st, you would use:
 
-````
+```
 ```photos
 {
   "query": {
@@ -123,7 +245,7 @@ For example, if you wanted to show photos of food taken on every April 1st, you 
   }
 }
 ```
-````
+```
 
 ## Adjusting the visual style
 
