@@ -1,11 +1,10 @@
 {
-	"id": "obsidian-google-photos",
+	"id": "google-photos",
 	"name": "Google Photos",
 	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Embed Google Photos images using the new Picker API (Legacy Library API features removed)",
 	"author": "Alan Grainger",
 	"authorUrl": "https://github.com/alangrainger",
-	"fundingUrl": "https://www.buymeacoffee.com/alangrainger",
 	"isDesktopOnly": false
 }
