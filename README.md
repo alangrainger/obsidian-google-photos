@@ -4,6 +4,12 @@
 
 This plugin has been successfully updated to work with Google's new Picker API after the Library API deprecation in March 2025.
 
+## 📢 Maintenance mode - looking for new maintainer
+
+I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone. It's only a matter of time before Google sunsets their photos app, and/or removes your access. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
+
+Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
+
 ---
 
 A plugin to embed photos from Google Photos into your [Obsidian](https://obsidian.md/) notes using the Google Photos Picker.
@@ -125,12 +131,6 @@ GPL-3.0 license
 **Note:** This plugin works with Google's current Picker API and should remain functional as long as Google maintains this API. The previous Library API limitations were imposed by Google's business decisions, not technical constraints.
 
 ![](https://img.shields.io/github/license/alangrainger/obsidian-google-photos) ![](https://img.shields.io/github/v/release/alangrainger/obsidian-google-photos?style=flat-square) ![](https://img.shields.io/github/downloads/alangrainger/obsidian-google-photos/total)
-
-## 📢 Maintenance mode - looking for new maintainer
-
-I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone. It's only a matter of time before Google sunsets their photos app, and/or removes your access. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
-
-Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
 
 ---
 
