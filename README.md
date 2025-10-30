@@ -4,7 +4,7 @@
 
 I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone.
 
-It's only a matter of time before Google sunsets their photos app, or [deletes your account with no recourse](https://reddit.com/r/googlephotos/comments/163g8sg/my_account_was_disabled_for_child_sexual_content/), and all your photos are gone just like that. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
+It's only a matter of time before Google sunsets their photos app, or [deletes your account with no recourse](https://reddit.com/r/googlephotos/comments/163g8sg/my_account_was_disabled_for_child_sexual_content/) and all your photos are gone just like that. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
 
 Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
 
