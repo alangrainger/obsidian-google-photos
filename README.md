@@ -8,6 +8,8 @@ It's only a matter of time before Google sunsets their photos app, or [deletes y
 
 Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
 
+Here's a guide for quick inserting of images from Immich into your notes: https://obsidian.alan.gr/obsidian-guides/insert-images-from-immich
+
 ---
 
 A plugin to embed photos from Google Photos into your [Obsidian](https://obsidian.md/) notes using the Google Photos Picker.
