@@ -8,7 +8,7 @@ It's only a matter of time before Google sunsets their photos app, or [deletes y
 
 Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
 
-Here's a guide for [quick inserting of images from Immich](https://obsidian.alan.gr/obsidian-guides/insert-images-from-immich) into your notes.
+There is now a plugin similar to this for Immich - see https://github.com/eikowagenknecht/obsidian-immich-picker
 
 ---
 
