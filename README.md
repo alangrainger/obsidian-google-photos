@@ -2,13 +2,11 @@
 
 ## 📢 Maintenance mode - looking for new maintainer
 
-I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone.
+I am now using [Immich](https://immich.app/) instead of Google Photos, which I strongly recommend to everyone. There is a plugin similar to this for Immich - see https://github.com/eikowagenknecht/obsidian-immich-picker
 
 It's only a matter of time before Google sunsets their photos app, or [deletes your account with no recourse](https://www.koffellaw.com/blog/google-ai-technology-flags-dad-who-took-photos-o/) and all your photos are gone just like that. Just check out [all the other projects they have killed](https://killedbygoogle.com/).
 
 Due to this, this plugin is now in maintenance mode. If you are interested in taking over this project please let me know.
-
-There is now a plugin similar to this for Immich - see https://github.com/eikowagenknecht/obsidian-immich-picker
 
 ---
 
